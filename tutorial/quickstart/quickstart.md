@@ -39,5 +39,5 @@ for i in range(3):
             axes[i, j].imshow(X[i*3 + j].permute(1, 2, 0))
 ```
 
-[样本示例](./assets/1.png)
+[!](./assets/1.png)
 
