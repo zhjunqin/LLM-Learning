@@ -1,0 +1,112 @@
+# python quickstart.py
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz to data/FashionMNIST/raw/train-images-idx3-ubyte.gz
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████| 26421880/26421880 [01:49<00:00, 241644.79it/s]
+Extracting data/FashionMNIST/raw/train-images-idx3-ubyte.gz to data/FashionMNIST/raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz to data/FashionMNIST/raw/train-labels-idx1-ubyte.gz
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 29515/29515 [00:00<00:00, 108264.45it/s]
+Extracting data/FashionMNIST/raw/train-labels-idx1-ubyte.gz to data/FashionMNIST/raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz to data/FashionMNIST/raw/t10k-images-idx3-ubyte.gz
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4422102/4422102 [01:00<00:00, 73419.92it/s]
+Extracting data/FashionMNIST/raw/t10k-images-idx3-ubyte.gz to data/FashionMNIST/raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz to data/FashionMNIST/raw/t10k-labels-idx1-ubyte.gz
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5148/5148 [00:00<00:00, 628376.61it/s]
+Extracting data/FashionMNIST/raw/t10k-labels-idx1-ubyte.gz to data/FashionMNIST/raw
+
+Shape of X [N, C, H, W]: torch.Size([64, 1, 28, 28])
+Shape of y: torch.Size([64]) torch.int64
+Using cuda device
+NeuralNetwork(
+  (flatten): Flatten(start_dim=1, end_dim=-1)
+  (linear_relu_stack): Sequential(
+    (0): Linear(in_features=784, out_features=512, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=512, out_features=512, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=512, out_features=10, bias=True)
+  )
+)
+Epoch 1
+-------------------------------
+loss: 2.297472  [   64/60000]
+loss: 2.285252  [ 6464/60000]
+loss: 2.266343  [12864/60000]
+loss: 2.255584  [19264/60000]
+loss: 2.253782  [25664/60000]
+loss: 2.209585  [32064/60000]
+loss: 2.220794  [38464/60000]
+loss: 2.177116  [44864/60000]
+loss: 2.177841  [51264/60000]
+loss: 2.140814  [57664/60000]
+Test Error:
+ Accuracy: 38.8%, Avg loss: 2.137160
+
+Epoch 2
+-------------------------------
+loss: 2.147146  [   64/60000]
+loss: 2.133876  [ 6464/60000]
+loss: 2.077458  [12864/60000]
+loss: 2.089126  [19264/60000]
+loss: 2.046086  [25664/60000]
+loss: 1.968989  [32064/60000]
+loss: 2.003446  [38464/60000]
+loss: 1.913801  [44864/60000]
+loss: 1.928612  [51264/60000]
+loss: 1.841727  [57664/60000]
+Test Error:
+ Accuracy: 53.7%, Avg loss: 1.846454
+
+Epoch 3
+-------------------------------
+loss: 1.880508  [   64/60000]
+loss: 1.843279  [ 6464/60000]
+loss: 1.735776  [12864/60000]
+loss: 1.773952  [19264/60000]
+loss: 1.675592  [25664/60000]
+loss: 1.615844  [32064/60000]
+loss: 1.643065  [38464/60000]
+loss: 1.544489  [44864/60000]
+loss: 1.574117  [51264/60000]
+loss: 1.465828  [57664/60000]
+Test Error:
+ Accuracy: 62.5%, Avg loss: 1.487599
+
+Epoch 4
+-------------------------------
+loss: 1.548307  [   64/60000]
+loss: 1.514866  [ 6464/60000]
+loss: 1.380112  [12864/60000]
+loss: 1.449611  [19264/60000]
+loss: 1.346662  [25664/60000]
+loss: 1.324552  [32064/60000]
+loss: 1.345886  [38464/60000]
+loss: 1.269935  [44864/60000]
+loss: 1.305765  [51264/60000]
+loss: 1.210252  [57664/60000]
+Test Error:
+ Accuracy: 63.9%, Avg loss: 1.233350
+
+Epoch 5
+-------------------------------
+loss: 1.297602  [   64/60000]
+loss: 1.285163  [ 6464/60000]
+loss: 1.132605  [12864/60000]
+loss: 1.239946  [19264/60000]
+loss: 1.126278  [25664/60000]
+loss: 1.129423  [32064/60000]
+loss: 1.161702  [38464/60000]
+loss: 1.095532  [44864/60000]
+loss: 1.136337  [51264/60000]
+loss: 1.057079  [57664/60000]
+Test Error:
+ Accuracy: 64.9%, Avg loss: 1.072697
+
+Done!
+Saved PyTorch Model State to model.pth
+Predicted: "Ankle boot", Actual: "Ankle boot"
