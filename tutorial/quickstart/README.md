@@ -2,6 +2,8 @@
 
 https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html
 
+https://pytorch.org/docs/stable/index.html
+
 ## Fashion MNIST
 
 https://www.kaggle.com/datasets/zalando-research/fashionmnist
