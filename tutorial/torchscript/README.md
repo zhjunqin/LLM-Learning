@@ -224,9 +224,11 @@ def forward(self,
 
 ```
 
-## Scripting and Tracing 同时使用
+## Scripting and Tracing 组合使用
 
-有些情况需要使用 Tracing 而不是 Scripting（例如，一个模块有许多基于常量值做出的架构决策，我们希望这些值不会出现在 TorchScript 中）。在这种情况下，Scripting 可以与 Tracing 组合使用：torch.jit.script 会将 Tracing 模块的代码内联，而 Tracing 将编写的模块的代码内联。
+有些情况需要使用 Tracing 而不是 Scripting（例如，一个模块有许多基于常量值做出的架构决策，我们希望这些值不会出现在 TorchScript 中）。在这种情况下，Scripting 可以与 Tracing 组合使用：torch.jit.script 会将 Tracing 模块的代码内联，而 Tracing 将 scripted 模块的代码内联。
+
+示例一：torch.jit.script 将 Tracing 模块的代码内联
 
 ```
 import torch
@@ -305,8 +307,133 @@ def forward(self,
     y1, h1, = _0
     y0, h0 = y1, h1
   return (y0, h0)
+```
+
+`torch.select` 等价于切片，比如 `tensor.select(0, index)` 等价于 `tensor[index]` 参考[文档](https://pytorch.org/docs/stable/generated/torch.select.html)。
+
+示例一：Tracing 将 scripted 模块的代码内联
 
 ```
+class WrapRNN(torch.nn.Module):
+    def __init__(self):
+        super(WrapRNN, self).__init__()
+        self.loop = torch.jit.script(MyRNNLoop())
+
+    def forward(self, xs):
+        y, h = self.loop(xs)
+        return torch.relu(y)
+
+warprnn = WrapRNN()
+traced = torch.jit.trace(warprnn(), (torch.rand(10, 3, 4)))
+print("=== WrapRNN ===")
+print(traced.code)
+```
+
+输出如下：
+```
+=== WrapRNN ===
+def forward(self,
+    xs: Tensor) -> Tensor:
+  loop = self.loop
+  _0, y, = (loop).forward(xs, )
+  return torch.relu(y)
+```
+
+## 保存和加载模型
+
+Pytroch 提供 API 将 TorchScript 模型保存到磁盘上的存档格式中，并从中加载。里面包括代码、参数、属性和调试信息，这意味着该存档是模型的一个独立的表示形式，可以在完全分离的进程中加载。
+
+```
+traced.save('wrapped_rnn.pt')
+
+loaded = torch.jit.load('wrapped_rnn.pt')
+
+print(loaded)
+print(loaded.code)
+
+xs = torch.rand(3, 3, 4)
+print(loaded(xs))
+print(warprnn(xs))
+
+```
+
+输出如下：
+```
+RecursiveScriptModule(
+  original_name=WrapRNN
+  (loop): RecursiveScriptModule(
+    original_name=MyRNNLoop
+    (cell): RecursiveScriptModule(
+      original_name=MyCell
+      (dg): RecursiveScriptModule(original_name=MyDecisionGate)
+      (linear): RecursiveScriptModule(original_name=Linear)
+    )
+  )
+)
+
+def forward(self,
+    xs: Tensor) -> Tensor:
+  loop = self.loop
+  _0, y, = (loop).forward(xs, )
+  return torch.relu(y)
+
+tensor([[0.9441, 0.0000, 0.5562, 0.0000],
+        [0.9451, 0.0000, 0.4321, 0.0000],
+        [0.9250, 0.0000, 0.0000, 0.0000]], grad_fn=<ReluBackward0>)
+tensor([[0.9441, 0.0000, 0.5562, 0.0000],
+        [0.9451, 0.0000, 0.4321, 0.0000],
+        [0.9250, 0.0000, 0.0000, 0.0000]], grad_fn=<ReluBackward0>)
+```
+
+
+## 模型文件
+
+保存后的 `wrapped_rnn.pt` 其实上应该是一个 zip 压缩包。将文件用 unzip 解压后。正如上面所说 torchscript 括代码、参数、属性和调试信息。
+
+```
+Archive:  wrapped_rnn.pt.zip
+ extracting: wrapped_rnn/data/0
+ extracting: wrapped_rnn/data/1
+ extracting: wrapped_rnn/data.pkl
+  inflating: wrapped_rnn/code/__torch__.py
+  inflating: wrapped_rnn/code/__torch__.py.debug_pkl
+  inflating: wrapped_rnn/code/__torch__/___torch_mangle_6.py
+  inflating: wrapped_rnn/code/__torch__/___torch_mangle_6.py.debug_pkl
+  inflating: wrapped_rnn/code/__torch__/___torch_mangle_3.py
+  inflating: wrapped_rnn/code/__torch__/___torch_mangle_3.py.debug_pkl
+  inflating: wrapped_rnn/code/__torch__/torch/nn/modules/linear/___torch_mangle_2.py
+  inflating: wrapped_rnn/code/__torch__/torch/nn/modules/linear/___torch_mangle_2.py.debug_pkl
+ extracting: wrapped_rnn/constants.pkl
+ extracting: wrapped_rnn/version
+```
+
+```
+$ tree .
+.
+├── code
+│   ├── __torch__
+│   │   ├── torch
+│   │   │   └── nn
+│   │   │       └── modules
+│   │   │           └── linear
+│   │   │               ├── ___torch_mangle_2.py
+│   │   │               └── ___torch_mangle_2.py.debug_pkl
+│   │   ├── ___torch_mangle_3.py
+│   │   ├── ___torch_mangle_3.py.debug_pkl
+│   │   ├── ___torch_mangle_6.py
+│   │   └── ___torch_mangle_6.py.debug_pkl
+│   ├── __torch__.py
+│   └── __torch__.py.debug_pkl
+├── constants.pkl
+├── data
+│   ├── 0
+│   └── 1
+├── data.pkl
+└── version
+
+7 directories, 13 files
+```
+
 
 ## 参考文献
 - https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html 

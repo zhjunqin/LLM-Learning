@@ -1,0 +1,20 @@
+name: "test"
+backend: "pytorch"
+max_batch_size: 2
+input [
+{
+    name: "x"
+    data_type: TYPE_FP32
+    dims: [ 3, 4 ]
+}
+]
+
+output [
+{
+    name: "y"
+    data_type: TYPE_FP32
+    dims: [ 3, 4 ]
+}
+]
+
+instance_group [{ kind: KIND_GPU }]
