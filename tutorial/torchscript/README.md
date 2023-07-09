@@ -51,6 +51,7 @@ MyCell(
         [ 0.8706, -0.1659, -0.6110,  0.7282]], grad_fn=<TanhBackward0>), tensor([[ 0.8078,  0.3965, -0.2237,  0.5210],
         [ 0.6914, -0.4180,  0.1072,  0.7222],
         [ 0.8706, -0.1659, -0.6110,  0.7282]], grad_fn=<TanhBackward0>))
+
 === Tracing code ===
 def forward(self,
     x: Tensor,
@@ -220,6 +221,90 @@ def forward(self,
   _0 = torch.add((dg).forward((linear).forward(x, ), ), h)
   new_h = torch.tanh(_0)
   return (new_h, new_h)
+
+```
+
+## Scripting and Tracing 同时使用
+
+有些情况需要使用 Tracing 而不是 Scripting（例如，一个模块有许多基于常量值做出的架构决策，我们希望这些值不会出现在 TorchScript 中）。在这种情况下，Scripting 可以与 Tracing 组合使用：torch.jit.script 会将 Tracing 模块的代码内联，而 Tracing 将编写的模块的代码内联。
+
+```
+import torch
+
+class MyDecisionGate(torch.nn.Module):
+    def forward(self, x):
+        if x.sum() > 0:
+            return x
+        else:
+            return -x
+
+class MyCell(torch.nn.Module):
+    def __init__(self, dg):
+        super(MyCell, self).__init__()
+        self.dg = dg
+        self.linear = torch.nn.Linear(4, 4)
+
+    def forward(self, x, h):
+        new_h = torch.tanh(self.dg(self.linear(x)) + h)
+        return new_h, new_h
+
+scripted_gate = torch.jit.script(MyDecisionGate())
+
+class MyRNNLoop(torch.nn.Module):
+    def __init__(self):
+        super(MyRNNLoop, self).__init__()
+        x, h = torch.rand(3, 4), torch.rand(3, 4)
+        self.cell = torch.jit.trace(MyCell(scripted_gate), (x, h))
+
+    def forward(self, xs):
+        h, y = torch.zeros(3, 4), torch.zeros(3, 4)
+        for i in range(xs.size(0)):
+            y, h = self.cell(xs[i], h)
+        return y, h
+
+rnn_loop = torch.jit.script(MyRNNLoop())
+print("=== scripted_gate ===")
+print(scripted_gate.code)
+print("=== rnn_loop.cell ===")
+print(rnn_loop.cell.code)
+print("=== rnn_loop ===")
+print(rnn_loop.code)
+```
+输出结果如下：
+
+```
+=== scripted_gate ===
+def forward(self,
+    x: Tensor) -> Tensor:
+  if bool(torch.gt(torch.sum(x), 0)):
+    _0 = x
+  else:
+    _0 = torch.neg(x)
+  return _0
+
+=== rnn_loop.cell ===
+def forward(self,
+    x: Tensor,
+    h: Tensor) -> Tuple[Tensor, Tensor]:
+  dg = self.dg
+  linear = self.linear
+  _0 = torch.add((dg).forward((linear).forward(x, ), ), h)
+  _1 = torch.tanh(_0)
+  return (_1, _1)
+
+=== rnn_loop ===
+def forward(self,
+    xs: Tensor) -> Tuple[Tensor, Tensor]:
+  h = torch.zeros([3, 4])
+  y = torch.zeros([3, 4])
+  y0 = y
+  h0 = h
+  for i in range(torch.size(xs, 0)):
+    cell = self.cell
+    _0 = (cell).forward(torch.select(xs, 0, i), h0, )
+    y1, h1, = _0
+    y0, h0 = y1, h1
+  return (y0, h0)
 
 ```
 
