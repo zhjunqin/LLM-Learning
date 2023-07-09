@@ -4,7 +4,7 @@ TorchScript 是 Pytorch 模型的中间表达，能够运行在高性能的环�
 
 ## Tracing
 
-TorchScript 提供了捕获模型定义的工具，即使在 PyTorch 的灵活和动态特性下也是如此。让我们首先来看看我们所说的跟踪 (tracing)。
+TorchScript 提供了捕获模型定义的工具，即使在 PyTorch 的灵活和动态特性下也是如此。首先来看看跟踪 (tracing) 的功能。
 
 ```
 import torch
@@ -99,9 +99,133 @@ print(traced_cell(x, h))
        grad_fn=<DifferentiableGraphBackward>))
 ```
 
-## 参考文献
+### graph 的含义
 
+虽然 graph 的输出是一个比较底层的代码，还是稍微看看里面内容的含义。
+
+里面用到了底层的库 ATen。ATen 来自于 A TENsor library for C++11 的缩写，是一个张量库，几乎所有 PyTorch 中的其他 Python 和 C++ 接口都是在其之上构建的。它提供了一个核心 Tensor 类，上面定义了许多数百个操作。这些操作中的大多数都有 CPU 和 GPU 实现，Tensor 类会根据其类型动态分派到相应的实现。使用 ATen 的一个小例子如下所示：
+
+```
+#include <ATen/ATen.h>
+
+at::Tensor a = at::ones({2, 2}, at::kInt);
+at::Tensor b = at::randn({2, 2});
+auto c = a + b.to(at::kInt);
+```
+
+上面 graph 中 `aten::add` 实现了如下的计算 `{aten::add, "${0} + ${2}*${1}"}`，也就是输入 0 加上输入 2 乘以输入 1。其中输入 1 为常数 1，所以结果为两个输入相加。
+
+```
+graph(%self.1 : __torch__.MyCell,
+      %x : Float(3, 4, strides=[4, 1], requires_grad=0, device=cpu),
+      %h : Float(3, 4, strides=[4, 1], requires_grad=0, device=cpu)):
+  # 定义的 Linear 层，从 %self.1 获取属性 linear
+  %linear : __torch__.torch.nn.modules.linear.Linear = prim::GetAttr[name="linear"](%self.1)
+  # 调用 %linear 的前向函数，保存到 %20 中
+  %20 : Tensor = prim::CallMethod[name="forward"](%linear, %x)
+  # 常数 Tensor 1，保存到 %11 中
+  %11 : int = prim::Constant[value=1]() # /path/to/test.py:9:0
+  # 计算 %20 + %h * %11 保存到 %12 中
+  %12 : Float(3, 4, strides=[4, 1], requires_grad=1, device=cpu) = aten::add(%20, %h, %11) # /path/to/test.py:9:0
+  # 计算 tanh(%12) 保存到 %13 中
+  %13 : Float(3, 4, strides=[4, 1], requires_grad=1, device=cpu) = aten::tanh(%12) # /path/to/test.py:9:0
+  # 构建 tuple(%13, %13) 作为返回，保存到 %14 中
+  %14 : (Float(3, 4, strides=[4, 1], requires_grad=1, device=cpu), Float(3, 4, strides=[4, 1], requires_grad=1, device=cpu)) = prim::TupleConstruct(%13, %13)
+  return (%14)
+```
+
+## 控制流
+
+增加一个控制流的子模块。
+
+```
+import torch
+
+class MyDecisionGate(torch.nn.Module):
+    def forward(self, x):
+        if x.sum() > 0:
+            return x
+        else:
+            return -x
+
+class MyCell(torch.nn.Module):
+    def __init__(self, dg):
+        super(MyCell, self).__init__()
+        self.dg = dg
+        self.linear = torch.nn.Linear(4, 4)
+
+    def forward(self, x, h):
+        new_h = torch.tanh(self.dg(self.linear(x)) + h)
+        return new_h, new_h
+
+x, h = torch.rand(3, 4), torch.rand(3, 4)
+my_cell = MyCell(MyDecisionGate())
+traced_cell = torch.jit.trace(my_cell, (x, h))
+
+print(traced_cell.dg.code)
+print(traced_cell.code)
+
+```
+
+执行结果如下：
+
+```
+/path/to/control_flow.py:5: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  if x.sum() > 0:
+def forward(self,
+    argument_1: Tensor) -> NoneType:
+  return None
+
+def forward(self,
+    x: Tensor,
+    h: Tensor) -> Tuple[Tensor, Tensor]:
+  dg = self.dg
+  linear = self.linear
+  _0 = (linear).forward(x, )
+  _1 = (dg).forward(_0, )
+  _2 = torch.tanh(torch.add(_0, h))
+  return (_2, _2)
+```
+
+从 `.code` 输出可以看出，`if-else` 分支不在其中，为什么呢？跟踪(tracing)确切地做了我们说的事情：运行代码，记录发生的操作并构造一个完全执行这些操作的 `ScriptModule`。不幸的是，诸如控制流之类的内容都被删除了。
+
+### torch.jit.script
+
+如何在 `TorchScript` 中表示这个模块呢？pytorch 提供了一个脚本编译器，它直接分析 Python 源代码，将其转换为 TorchScript。使用脚本编译器将 MyDecisionGate 转换为 TorchScript：
+
+```
+scripted_gate = torch.jit.script(MyDecisionGate())
+
+my_cell = MyCell(scripted_gate)
+scripted_cell = torch.jit.script(my_cell)
+
+print(scripted_gate.code)
+print(scripted_cell.code)
+```
+执行结果如下：
+```
+def forward(self,
+    x: Tensor) -> Tensor:
+  if bool(torch.gt(torch.sum(x), 0)):
+    _0 = x
+  else:
+    _0 = torch.neg(x)
+  return _0
+
+def forward(self,
+    x: Tensor,
+    h: Tensor) -> Tuple[Tensor, Tensor]:
+  dg = self.dg
+  linear = self.linear
+  _0 = torch.add((dg).forward((linear).forward(x, ), ), h)
+  new_h = torch.tanh(_0)
+  return (new_h, new_h)
+
+```
+
+## 参考文献
 - https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html 
 - https://pytorch.org/tutorials/recipes/recipes/saving_and_loading_models_for_inference.html 
 - https://pytorch.org/docs/stable/jit.html 
 - https://pytorch.org/docs/master/jit_language_reference.html#language-reference
+- https://pytorch.org/cppdocs/
