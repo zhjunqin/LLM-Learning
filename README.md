@@ -4,7 +4,6 @@ Pytorch 学习笔记。
 
 ## tutorial
 
-[Quick Start](./tutorial/quickstart/README.md)
-[TorchScript](./tutorial/torchscript/README.md)
-[Checkpoint](./tutorial/checkpoint/README.md)
-
+- [快速开始](./tutorial/quickstart/README.md)
+- [TorchScript 介绍](./tutorial/torchscript/README.md)
+- [Checkpoint 介绍](./tutorial/checkpoint/README.md)
