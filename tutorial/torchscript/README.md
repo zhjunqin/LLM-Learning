@@ -228,7 +228,7 @@ def forward(self,
 
 有些情况需要使用 Tracing 而不是 Scripting（例如，一个模块有许多基于常量值做出的架构决策，我们希望这些值不会出现在 TorchScript 中）。在这种情况下，Scripting 可以与 Tracing 组合使用：torch.jit.script 会将 Tracing 模块的代码内联，而 Tracing 将 scripted 模块的代码内联。
 
-示例一：torch.jit.script 将 Tracing 模块的代码内联
+情况一：torch.jit.script 将 Tracing 模块的代码内联
 
 ```
 import torch
@@ -311,7 +311,7 @@ def forward(self,
 
 `torch.select` 等价于切片，比如 `tensor.select(0, index)` 等价于 `tensor[index]` 参考[文档](https://pytorch.org/docs/stable/generated/torch.select.html)。
 
-示例一：Tracing 将 scripted 模块的代码内联
+情况二：Tracing 将 scripted 模块的代码内联
 
 ```
 class WrapRNN(torch.nn.Module):
@@ -338,6 +338,8 @@ def forward(self,
   _0, y, = (loop).forward(xs, )
   return torch.relu(y)
 ```
+
+当情况需要时，脚本和跟踪都可以使用，并且可以一起使用。
 
 ## 保存和加载模型
 
@@ -434,6 +436,32 @@ $ tree .
 7 directories, 13 files
 ```
 
+```
+$ cat code/__torch__.py
+class WrapRNN(Module):
+  __parameters__ = []
+  __buffers__ = []
+  training : bool
+  _is_full_backward_hook : Optional[bool]
+  loop : __torch__.___torch_mangle_6.MyRNNLoop
+  def forward(self: __torch__.WrapRNN,
+    xs: Tensor) -> Tensor:
+    loop = self.loop
+    _0, y, = (loop).forward(xs, )
+    return torch.relu(y)
+class MyDecisionGate(Module):
+  __parameters__ = []
+  __buffers__ = []
+  training : bool
+  _is_full_backward_hook : Optional[bool]
+  def forward(self: __torch__.MyDecisionGate,
+    x: Tensor) -> Tensor:
+    if bool(torch.gt(torch.sum(x), 0)):
+      _1 = x
+    else:
+      _1 = torch.neg(x)
+    return _1
+```
 
 ## 参考文献
 - https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html 
