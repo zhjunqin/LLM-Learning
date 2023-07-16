@@ -1,5 +1,6 @@
-# Normaliztion
+# Normalization
 
+## Batch Normalization
 
 ## Layer Normalization
 

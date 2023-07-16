@@ -2,7 +2,7 @@
 
 Pytorch 学习笔记。
 
-## tutorial
+## Tutorial
 
 - [快速开始](./tutorial/quickstart/README.md)
 - [TorchScript 介绍](./tutorial/torchscript/README.md)
