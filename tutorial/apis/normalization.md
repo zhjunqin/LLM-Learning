@@ -19,6 +19,7 @@ x = np.array([[[1,2,-1,1], [3,4,-2,2]],
 x_tensor = torch.from_numpy(x)
 x_tensor
 
+
 ln = torch.nn.LayerNorm(normalized_shape=4, eps=0, elementwise_affine=False)
 ln(x_tensor)
 
@@ -27,4 +28,33 @@ x_mean
 x_std = x_tensor.std(-1, keepdim=True, unbiased=False)
 x_std
 (x_tensor - x_mean) / x_std
+```
+
+```
+>>> ln(x_tensor)
+tensor([[[ 0.2294,  1.1471, -1.6059,  0.2294],
+         [ 0.5488,  0.9879, -1.6465,  0.1098]],
+
+        [[-0.5774,  1.7321, -0.5774, -0.5774],
+         [ 0.3015,  1.5076, -0.9045, -0.9045]]])
+>>> x_mean = x_tensor.mean(-1, keepdim=True)
+>>> x_mean
+tensor([[[0.7500],
+         [1.7500]],
+
+        [[1.2500],
+         [2.7500]]])
+>>> x_std = x_tensor.std(-1, keepdim=True, unbiased=False)
+>>> x_std
+tensor([[[1.0897],
+         [2.2776]],
+
+        [[0.4330],
+         [0.8292]]])
+>>> (x_tensor - x_mean) / x_std
+tensor([[[ 0.2294,  1.1471, -1.6059,  0.2294],
+         [ 0.5488,  0.9879, -1.6465,  0.1098]],
+
+        [[-0.5774,  1.7321, -0.5774, -0.5774],
+         [ 0.3015,  1.5076, -0.9045, -0.9045]]])
 ```
