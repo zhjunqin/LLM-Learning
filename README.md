@@ -1,8 +1,8 @@
-# Pytorch Learning
+# LLM Learning
 
-Pytorch 学习笔记。
+LLM 学习笔记。
 
-## Tutorial
+## Pytorch Tutorial
 
 - [快速开始](./tutorial/quickstart/README.md)
 - [TorchScript 介绍](./tutorial/torchscript/README.md)
