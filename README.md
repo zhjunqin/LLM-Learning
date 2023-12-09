@@ -20,4 +20,5 @@ LLM 学习笔记。
 ## Training/Inference
 
 - [DeepSpeed](./DeepSpeed/README.md)
+- [混合精度训练](./training/amp/README.md)
 
