@@ -11,3 +11,13 @@ LLM 学习笔记。
 ## NLP
 
 - [Transformer](./nlp/transformer/README.md)
+
+
+## GPT
+- [minGPT/nano GPT](./GPT/nanoGPT/README.md)
+- [MiniGPT-4](./GPT/miniGPT4/README.md)
+
+## 训练/推理
+
+- [DeepSpeed](./DeepSpeed/README.md)
+
