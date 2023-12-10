@@ -4,4 +4,4 @@
 
 https://github.com/karpathy/nanoGPT
 
-## 执行
+## 模型代码

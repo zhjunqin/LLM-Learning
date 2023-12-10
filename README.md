@@ -14,8 +14,9 @@ LLM 学习笔记。
 - [Transformer](./nlp/transformer/README.md)
 
 ## GPT
-- [minGPT/nano GPT](./GPT/nanoGPT/README.md)
+- [Nano GPT](./GPT/nanoGPT/README.md)
 - [MiniGPT-4](./GPT/miniGPT4/README.md)
+- Tokenizers
 
 ## Training/Inference
 
