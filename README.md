@@ -22,4 +22,9 @@ LLM 学习笔记。
 
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
+- [优化器](./training/optimizer/README.md)
 
+
+## 其他
+
+- [Markdown 数学公式](https://www.cnblogs.com/bytesfly/p/markdown-formula.html)
