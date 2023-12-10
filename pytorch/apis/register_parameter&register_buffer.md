@@ -3,7 +3,7 @@
 https://geek-docs.com/pytorch/pytorch-questions/50_pytorch_what_is_the_difference_between_register_parameter_and_register_buffer_in_pytorch.html
 https://zhuanlan.zhihu.com/p/574259713
 
-Pytorch 保存模型是保存状态字典（state_dict），也即 torch.save(model.state_dict())
+Pytorch 保存模型是保存状态字典（state_dict），也即 `torch.save(model.state_dict())`
 但是有一个问题就是 model 的类成员变量不会被放入 model.state_dict() 被保存；
 同样地，model 的类成员变量也不会随 model.cuda() 命令被复制到 GPU 中。
 这就引出了两个问题，如何让模型需要的一些量被保存，以及如何将这些模型需要的量送入 GPU。
@@ -13,6 +13,7 @@ Pytorch 保存模型是保存状态字典（state_dict），也即 torch.save(mo
 这两种参数都存在于 model.state_dict() 的 OrderedDict 中，也会随着模型“移动”（model.cuda()）。
 对 Parameter 的访问 model.parameters() 或者 model.named_parameters()，对 buffer 的访问 model.buffers() 或者 model.named_buffers()。
 可以看到，buffer 实际上是一种不被更新的 parameter，那么将 parameter 的 requires_grad 参数设置为 False 也可以达到和 buffer 类似的效果，但是对其他正常 parameter 的某些操作可能会影响到这些 "requires_grad==True" 的变量。
+
 batch normalization 层中的 running_mean, running_var, num_batches_tracked 这三个参数是 buffer 类型的，这样既可以用 state_dict() 保存，也不会随着 optimizer 更新。
 
 ```
