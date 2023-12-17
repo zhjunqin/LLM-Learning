@@ -156,16 +156,13 @@ class GPT(nn.Module):
         return logits, loss
 ```
 
-
-
-
 ## weight-tying
 
 [Using the Output Embedding to Improve Language Models](https://arxiv.org/abs/1608.05859v3)
 
 也就是输出的 embedding 矩阵和输入的 word token embedding 矩阵共享同一个矩阵。
 
-torch.nn.Linear 中的权重的形状：
+torch.nn.Linear 中的权重的形状为 `(output_dim, input_dim)`：
 
 $$y=xA^T + b$$
 
@@ -382,7 +379,7 @@ $$GELU(x)=0.5∗x∗(1+Tanh(\sqrt{2/π}∗(x+0.044715∗x^3)))$$
 
 ![](./GELU.png)
 
-## 推理的前向
+## 推理最后的输出
 
 将 x 的第二维只取预测序列的最后一个
 
@@ -398,10 +395,10 @@ logits = self.lm_head(x[:, [-1], :]) # note: using list [-1] to preserve the tim
 
 [Temperature 在模型中的作用](https://avoid.overfit.cn/post/04f2376489184f53a6ae9c5d4b43dc97)
 
-Temperature 是一个超参数，可用于控制生成语言模型中生成文本的随机性和创造性。它用于调整模型的 softmax 输出层中预测词的概率。温度参数定义为在应用 softmax 函数之前用于调整 logits 的比例因子的倒数。
+Temperature 是一个超参数，可用于控制生成语言模型中生成文本的随机性和创造性。它用于调整模型的 softmax 输出层中预测词的概率。Temperature 参数定义为在应用 softmax 函数之前用于调整 logits 的比例因子的倒数。
 
 当 Temperature 设置为较低的值时，预测词的概率会变尖锐，这意味着选择最有可能的词的概率更高。这会产生更保守和可预测的文本，因为模型不太可能生成意想不到或不寻常的词。
-另一方面，当Temperature 设置为较高值时，预测词的概率被拉平，这意味着所有词被选择的可能性更大。这会产生更有创意和多样化的文本，因为模型更有可能生成不寻常或意想不到的词。
+另一方面，当 Temperature 设置为较高值时，预测词的概率被拉平，这意味着所有词被选择的可能性更大。这会产生更有创意和多样化的文本，因为模型更有可能生成不寻常或意想不到的词。
 
 Temperature 参数通常设置为 0.1 到 1.0 之间的值，具体取决于生成文本中所需的随机性和创造性水平。温度值为 1.0 对应于标准 softmax 函数，其中预测词的概率未按比例缩放。
 
@@ -493,4 +490,58 @@ tensor([[ 0,  0, 13, 26, 19, 17, 24, 27, 10]], device='cuda:0')
 torch.Size([1, 9])
 (Pdb) p idx
 tensor([[ 0,  0, 13, 26, 19, 17, 24, 27, 10,  0]], device='cuda:0')
+```
+
+## 前向过程
+
+```
+GPT(
+  (transformer): ModuleDict(
+    (wte): Embedding(65, 384)
+    (wpe): Embedding(256, 384)
+    (drop): Dropout(p=0.2, inplace=False)
+    (h): ModuleList(
+      (0-5): 6 x Block(
+        (ln_1): LayerNorm()
+        (attn): CausalSelfAttention(
+          (c_attn): Linear(in_features=384, out_features=1152, bias=False) # 1152 = 3 * 384
+          (c_proj): Linear(in_features=384, out_features=384, bias=False)
+          (attn_dropout): Dropout(p=0.2, inplace=False)
+          (resid_dropout): Dropout(p=0.2, inplace=False)
+        )
+        (ln_2): LayerNorm()
+        (mlp): MLP(
+          (c_fc): Linear(in_features=384, out_features=1536, bias=False) # 1536 = 4 * 384
+          (gelu): GELU(approximate='none')
+          (c_proj): Linear(in_features=1536, out_features=384, bias=False)
+          (dropout): Dropout(p=0.2, inplace=False)
+        )
+      )
+    )
+    (ln_f): LayerNorm()
+  )
+  (lm_head): Linear(in_features=384, out_features=65, bias=False)
+)
+
+```
+
+
+这里介绍一下，整个前向过程的 shape 
+
+```
+# forward the GPT model itself
+tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
+pos_emb = self.transformer.wpe(pos) # position embeddings of shape (t, n_embd)
+x = self.transformer.drop(tok_emb + pos_emb) # (b, t, n_embd)
+for block in self.transformer.h:
+    x = block(x)
+x = self.transformer.ln_f(x)
+
+if targets is not None:
+    # if we are given some desired targets also calculate the loss
+    logits = self.lm_head(x)
+    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
+else:
+    # inference-time mini-optimization: only forward the lm_head on the very last position
+    logits = self.lm_head(x[:, [-1], :]) # note: using list [-1] to preserve the time dim
 ```
