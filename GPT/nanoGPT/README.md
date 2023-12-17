@@ -534,8 +534,8 @@ tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
 pos_emb = self.transformer.wpe(pos) # position embeddings of shape (t, n_embd)
 x = self.transformer.drop(tok_emb + pos_emb) # (b, t, n_embd)
 for block in self.transformer.h:
-    x = block(x)
-x = self.transformer.ln_f(x)
+    x = block(x) # (b, t, n_embd)
+x = self.transformer.ln_f(x) # (b, t, n_embd)
 
 if targets is not None:
     # if we are given some desired targets also calculate the loss
@@ -543,5 +543,72 @@ if targets is not None:
     loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
 else:
     # inference-time mini-optimization: only forward the lm_head on the very last position
-    logits = self.lm_head(x[:, [-1], :]) # note: using list [-1] to preserve the time dim
+    logits = self.lm_head(x[:, [-1], :]) # note: using list [-1] to preserve the time dim (b, 1, vocab_size)
+```
+
+## 统计模型的参数
+
+
+```
+total = 0
+for name,parameters in model.named_parameters():
+    print(name, ':', parameters.size(), parameters.numel())
+    total += parameters.numel()
+```
+
+```
+number of parameters: 10.65M
+transformer.wte.weight :  torch.Size([65, 384]) :  24960
+transformer.wpe.weight :  torch.Size([256, 384]) :  98304
+transformer.h.0.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.0.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.0.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.0.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.0.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.0.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+transformer.h.1.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.1.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.1.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.1.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.1.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.1.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+transformer.h.2.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.2.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.2.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.2.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.2.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.2.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+transformer.h.3.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.3.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.3.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.3.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.3.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.3.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+transformer.h.4.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.4.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.4.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.4.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.4.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.4.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+transformer.h.5.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.5.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.5.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.5.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.5.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.5.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+transformer.ln_f.weight :  torch.Size([384]) :  384
+total:  10,745,088
+```
+
+每个 Attention
+
+```
+transformer.h.0.ln_1.weight :  torch.Size([384]) :  384
+transformer.h.0.attn.c_attn.weight :  torch.Size([1152, 384]) :  442368
+transformer.h.0.attn.c_proj.weight :  torch.Size([384, 384]) :  147456
+transformer.h.0.ln_2.weight :  torch.Size([384]) :  384
+transformer.h.0.mlp.c_fc.weight :  torch.Size([1536, 384]) :  589824
+transformer.h.0.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
+
+total: 1,770,240
 ```
