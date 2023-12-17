@@ -8,8 +8,9 @@ LLM 学习笔记。
 - [Checkpoint 介绍](./pytorch/checkpoint/README.md)
 - [PyTorch Distributed](./pytorch/distributed/README.md)
 
-## NLP Models
+## NLP
 - [Transformer](./nlp/transformer/README.md)
+- [Perplexity](./nlp/Perplexity.md)
 
 ## GPT repos
 - [Nano GPT](./GPT/nanoGPT/README.md)
