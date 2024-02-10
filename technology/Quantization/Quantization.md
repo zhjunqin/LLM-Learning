@@ -19,7 +19,7 @@
 在本节中，我们将实施两种量化技术：一种是 absolute maximum（absmax）量化的对称量化方法，另一种是 zero-point 量化的非对称量化方法。在这两种情况下，目标是将 FP32 张量 $X$ (原始权重）映射到 INT8 张量 $X_{quant}$（量化权重）。
 
 ### absmax quantization
-使用 absmax 量化，原始数值被除以张量的绝对最大值，并乘以一个缩放因子（127），将输入映射到范围[-127, 127]。为了恢复原始的 FP16 值，INT8 数值除以量化因子，但是四舍五入会导致一定的精度损失。
+使用 absmax 量化，原始数值被除以张量的绝对最大值，并乘以一个缩放因子（127），将输入映射到范围 [-127, 127]。为了恢复原始的 FP16 值，INT8 数值除以量化因子，但是四舍五入会导致一定的精度损失。
 
 $$
 X_{\rm quant} = \rm round \left( \frac{127}{\rm max{|X|}} \cdot X \right) 
@@ -30,7 +30,7 @@ $$
 
 例如，假定有一个绝对最大值为 3.2。权重为 0.1 将被量化为 $\rm round \left( \frac{127}{\rm 3.2} \times 0.1 \right) = \rm round (3.96875) = 4 $。
 
-如果想要将其反量化，我们将得到 $\frac{3.2}{127} \times 4 = 0.1008 $，这意味着一个误差为0.008。
+如果想要将其反量化，我们将得到 $\frac{3.2}{127} \times 4 = 0.1008 $，这意味着一个误差为 0.008。
 
 下面是相应的 Python 实现：
 
@@ -57,6 +57,7 @@ def absmax_quantize(X):
 $$
 \rm scale =  \frac{255}{\rm max(X) - \rm min(X)}
 $$
+
 $$
 \rm zeropoint = - \rm round(scale \cdot min(X)) - 128
 $$
@@ -66,6 +67,7 @@ $$
 $$
 X_{\rm quant} = \rm round \left( \rm scale \cdot X + zeropoint \right) 
 $$
+
 $$
 X_{\rm dequant} = \frac{X_{\rm quant} - \rm zeropoint}{\rm scale} 
 $$
