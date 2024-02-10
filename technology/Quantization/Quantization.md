@@ -99,5 +99,92 @@ def zeropoint_quantize(X):
     return X_quant.to(torch.int8), X_dequant
 ```
 
+## 使用 transformers 库
+
+我们可以借助 transformers 库在真实模型上使用这两个函数。
+
+```
+pip install -q bitsandbytes>=0.39.0
+pip install -q accelerate
+pip install transformers
+```
+
+我们首先加载 GPT-2 的模型和分词器。这是一个非常小的模型，我们可能不想对其进行量化，但对于本教程来说已经足够了。首先，我们想观察模型的大小，以便稍后进行比较，并评估由于 8 位量化而产生的内存节省。
+
+```
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+torch.manual_seed(0)
+
+# Set device to CPU for now
+device = 'cpu'
+
+# Load model and tokenizer
+model_id = 'gpt2'
+model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Print model size
+print(f"Model size: {model.get_memory_footprint():,} bytes")
+```
+得到模型参数大小
+```
+Model size: 510,342,192 bytes
+```
+GPT-2 模型参数 FP32 精度的大小大约为 487MB。
+
+下一步是使用 zero-point 量化和 absmax 量化对权重进行量化。在下面的示例中，我们将这些技术应用于 GPT-2 的第一个注意力层，以查看结果。
+
+```
+# Extract weights of the first layer
+weights = model.transformer.h[0].attn.c_attn.weight.data
+print("Original weights:")
+print(weights)
+
+# Quantize layer using absmax quantization
+weights_abs_quant, _ = absmax_quantize(weights)
+print("\nAbsmax quantized weights:")
+print(weights_abs_quant)
+
+# Quantize layer using absmax quantization
+weights_zp_quant, _ = zeropoint_quantize(weights)
+print("\nZero-point quantized weights:")
+print(weights_zp_quant)
+```
+
+```
+Original weights:
+tensor([[-0.4738, -0.2614, -0.0978,  ...,  0.0513, -0.0584,  0.0250],
+        [ 0.0874,  0.1473,  0.2387,  ..., -0.0525, -0.0113, -0.0156],
+        [ 0.0039,  0.0695,  0.3668,  ...,  0.1143,  0.0363, -0.0318],
+        ...,
+        [-0.2592, -0.0164,  0.1991,  ...,  0.0095, -0.0516,  0.0319],
+        [ 0.1517,  0.2170,  0.1043,  ...,  0.0293, -0.0429, -0.0475],
+        [-0.4100, -0.1924, -0.2400,  ..., -0.0046,  0.0070,  0.0198]])
+
+Absmax quantized weights:
+tensor([[-21, -12,  -4,  ...,   2,  -3,   1],
+        [  4,   7,  11,  ...,  -2,  -1,  -1],
+        [  0,   3,  16,  ...,   5,   2,  -1],
+        ...,
+        [-12,  -1,   9,  ...,   0,  -2,   1],
+        [  7,  10,   5,  ...,   1,  -2,  -2],
+        [-18,  -9, -11,  ...,   0,   0,   1]], dtype=torch.int8)
+
+Zero-point quantized weights:
+tensor([[-20, -11,  -3,  ...,   3,  -2,   2],
+        [  5,   8,  12,  ...,  -1,   0,   0],
+        [  1,   4,  18,  ...,   6,   3,   0],
+        ...,
+        [-11,   0,  10,  ...,   1,  -1,   2],
+        [  8,  11,   6,  ...,   2,  -1,  -1],
+        [-18,  -8, -10,  ...,   1,   1,   2]], dtype=torch.int8)
+
+```
+原始（FP32）和量化（INT8）值之间的差异比较明显，但是 absmax 权重和 zero-point 权重之间的差异比较微妙。在这种情况下，看起来 zero-point 被用 -1 进行了偏移。这表明该层的权重分布相当对称。
+
+
+
+
 ## 参考
 - https://mlabonne.github.io/blog/posts/Introduction_to_Weight_Quantization.html
