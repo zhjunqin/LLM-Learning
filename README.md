@@ -24,6 +24,7 @@ LLM 学习笔记。
 - Rotary position embedding
 - KV Cache
 - RMSNorm
+- Quantization 量化()
 
 ## Training
 - [DeepSpeed](./DeepSpeed/README.md)
