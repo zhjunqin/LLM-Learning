@@ -99,8 +99,6 @@ def zeropoint_quantize(X):
     return X_quant.to(torch.int8), X_dequant
 ```
 
-## 使用 transformers 库
-
 我们可以借助 transformers 库在真实模型上使用这两个函数。
 
 ```
@@ -307,9 +305,145 @@ Zeropoint perplexity: 17.60
 
 在这个示例中，我们将量化技术应用于整个层（按张量基础）。然而，我们可以在不同的粒度级别上应用它：从整个模型到单个值。一次性对整个模型进行量化会严重降低性能，而对单个值进行量化会带来很大的开销。在实践中，我们通常更喜欢向量化 (vector-wise quantization) 的量化方法，它考虑了同一张量内行和列中值的变异性。
 
-然而，即使是向量化的量化也无法解决异常值特征的问题。异常值特征是指当模型达到一定规模（>6.7B 参数）时，在所有 Transformer 中出现的极端值（负值或正值）。这是一个问题，因为单个异常值可能会降低所有其他值的精度。但是丢弃这些异常值特征并不是一个选择，因为它将极大地降低模型的性能。
+然而，即使是向量化的量化也无法解决异常值特征 (outlier features) 的问题。异常值特征是指当模型达到一定规模（>6.7B 参数）时，在所有 Transformer 中出现的极端值（负值或正值）。这是一个问题，因为单个异常值可能会降低所有其他值的精度。但是丢弃这些异常值特征并不是一个选择，因为它将极大地降低模型的性能。
 
+示例：
+
+```
+A=[-0.10, -0.23, 0.08, -0.38, -0.28, -0.29, -2.11, 0.34, -0.53, -67.0]
+
+```
+
+注意到向量 A 中有异常值，如果去掉该值对向量 A 做量化和反量化，处理后的结果是：
+
+```
+[-0.10, -0.23, 0.08, -0.38, -0.28, -0.28, -2.11, 0.33, -0.53]
+```
+出现的误差只有 -0.29 -> -0.28。但是如果我们在保留异常值 -67.0 的情况下对该向量做量化和反量化，处理后的结果是：
+```
+[ -0.00, -0.00, 0.00, -0.53, -0.53, -0.53, -2.11, 0.53, -0.53, -67.00]
+```
+可见大部分信息在处理后都丢失了。
+
+## LLM.int8
+
+由 Dettmers 等人（2022年）引入，LLM.int8() 是解决异常值 (outlier features) 问题的一种解决方案。它依赖于一种向量化（absmax）量化方案，并引入了混合精度量化。这意味着异常值特征在 FP16 格式下进行处理以保留其精度，而其他值在 INT8 格式下进行处理。由于异常值约占值的 0.1％，这有效地将 LLM 的内存占用减少了将近 2 倍。
+
+![](./assets/llm_int8_1.png)
+
+LLM.int8()通过以下三个关键步骤进行矩阵乘法计算：
+
+- 从输入hidden states $X$ 中提取包含异常值特征的列，使用自定义阈值进行筛选。
+- 使用 FP16 对异常值进行矩阵乘法运算，使用 INT8 对非异常值进行向量化量化的矩阵乘法运算（对于 hidden states 是按行进行的，对于权重矩阵是按列进行的）。
+- 对非异常值结果进行反量化（从 INT8 转为 FP16），然后将其与异常值结果相加，得到完整的 FP16 结果。
+
+![](./assets/llm_int8_2.png)
+
+这种方法是必要的，因为 8 位精度是有限的，当对包含比较大的值的向量进行量化时，可能会产生相当大的误差。这些误差在传播到多个层时也会趋向于放大。
+
+我们可以很容易地使用这种技术，这要归功于 bitsandbytes 库被集成到 Hugging Face 生态系统中。我们只需要在加载模型时指定`load_in_8bit=True`（同时需要 GPU 支持）。
+
+```
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+model_int8 = AutoModelForCausalLM.from_pretrained(model_id,
+                                             device_map='auto',
+                                             load_in_8bit=True,
+                                             )
+print(f"Model size: {model_int8.get_memory_footprint():,} bytes")
+```
+
+```
+Model size: 176,527,896 bytes
+```
+
+通过添加这一行额外的代码，模型现在几乎缩小了三倍（ 168MB 对比 487MB ）。我们甚至可以像之前一样比较原始权重和量化权重的分布：
+
+```
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+
+# Flatten weight tensors
+weights_int8 = [param.data.clone() for param in model_int8.parameters()]
+weights_int8 = np.concatenate([t.cpu().numpy().flatten() for t in weights_int8])
+
+# Set background style
+plt.style.use('ggplot')
+
+# Create figure and axis
+fig, ax = plt.subplots(figsize=(10,5), dpi=300)
+
+# Plot the histograms
+ax.hist(weights, bins=150, alpha=0.5, label='Original weights',
+        color='blue', range=(-2, 2))
+ax.hist(weights_int8, bins=150, alpha=0.5, label='LLM.int8() weights',
+        color='red', range=(-2, 2))
+
+# Add grid
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# Add legend
+ax.legend()
+
+# Add title and labels
+ax.set_title('Comparison of Original and Dequantized Weights', fontsize=16)
+ax.set_xlabel('Weights', fontsize=14)
+ax.set_ylabel('Count', fontsize=14)
+plt.gca().yaxis.set_major_formatter(ticker.EngFormatter())
+
+# Improve font
+plt.rc('font', size=12)
+
+plt.tight_layout()
+plt.show()
+```
+
+![](./assets/compare2.png)
+
+在这种情况下，我们可以看到在 -2、-1、0、1、2 等处有尖峰。这些值对应于存储在 INT8 格式（非异常值）中的参数。您可以通过使用 model_int8.parameters() 打印模型的权重来验证。
+
+我们还可以使用这个量化模型生成文本，并将其与原始模型进行比较。
+
+```
+# Generate text with quantized model
+text_int8 = generate_text(model_int8, "I have a dream")
+
+print(f"Original model:\n{original_text}")
+print("-" * 50)
+print(f"LLM.int8() model:\n{text_int8}")
+```
+
+```
+Original model:
+I have a dream, but I'm scared I might fail."
+
+She did not say what she was scared of, but she certainly wasn't scared of what she will do if she tries any of these things. Even if it is just to
+--------------------------------------------------
+LLM.int8() model:
+I have a dream. I don't know what will come of it, but I am going to have to look for something that will be right. I haven't thought about it for a long time, but I have to try to get that thing
+```
+
+很难判断哪个输出是最好的，但我们可以依靠困惑度指标给出一个（近似的）答案。
+
+```
+print(f"Perplexity (original):   {ppl.item():.2f}")
+
+ppl = calculate_perplexity(model_int8, text_int8)
+print(f"Perplexity (LLM.int8()): {ppl.item():.2f}")
+```
+
+```
+Perplexity (original):   11.11
+Perplexity (LLM.int8()): 7.93
+```
+
+在这种情况下，量化模型的困惑度比原始模型低。一般情况下，并非总是这样，但这表明这种量化技术非常有竞争力。事实上，LLM.int8() 的作者表明，性能下降非常低，可以忽略不计（<1%）。然而，它在计算方面有额外的成本：对于大型模型来说，LLM.int8() 的速度大约慢了 20% 左右。
+
+## 总结
+
+本文主要介绍了两种 8-bit 量化技术：absmax 和 zero-poing 量化。然而，它们的局限性，特别是在处理异常值方面，导致了 LLM.int8() 的出现，这是一种能够保持模型性能的技术。这种方法突显了在权重量化领域取得的进展，揭示了妥善处理异常值的重要性。
 
 
 ## 参考
 - https://mlabonne.github.io/blog/posts/Introduction_to_Weight_Quantization.html
+- https://zhuanlan.zhihu.com/p/627436535
