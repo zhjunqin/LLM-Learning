@@ -183,6 +183,131 @@ tensor([[-20, -11,  -3,  ...,   3,  -2,   2],
 ```
 原始（FP32）和量化（INT8）值之间的差异比较明显，但是 absmax 权重和 zero-point 权重之间的差异比较微妙。在这种情况下，看起来 zero-point 被用 -1 进行了偏移。这表明该层的权重分布相当对称。
 
+我们可以通过对 GPT-2 的每一层（线性层、注意力层等）进行量化来比较这些技术，并创建两个新模型：model_abs 和 model_zp。准确地说，我们实际上将用反量化的权重替换原始权重。这有两个好处：它允许我们比较权重的分布（相同的尺度），实际运行模型。
+
+实际上，PyTorch 默认不允许进行 INT8 矩阵乘法。在真实的场景中，我们会将它们反量化以运行模型（例如使用 FP16），但以 INT8 形式存储。在下一节中，我们将使用 bitsandbytes 库来解决这个问题。
+
+```
+import numpy as np
+from copy import deepcopy
+
+# Store original weights
+weights = [param.data.clone() for param in model.parameters()]
+
+# Create model to quantize
+model_abs = deepcopy(model)
+
+# Quantize all model weights
+weights_abs = []
+for param in model_abs.parameters():
+    _, dequantized = absmax_quantize(param.data)
+    param.data = dequantized
+    weights_abs.append(dequantized)
+
+# Create model to quantize
+model_zp = deepcopy(model)
+
+# Quantize all model weights
+weights_zp = []
+for param in model_zp.parameters():
+    _, dequantized = zeropoint_quantize(param.data)
+    param.data = dequantized
+    weights_zp.append(dequantized)
+```
+
+现在我们已经对模型进行了量化，我们想要检查这个过程的影响。直观地说，我们希望确保量化权重与原始权重接近。检查的一种可视化方法是绘制反量化和原始权重的分布图。如果量化是有损的，它将会显著改变权重的分布。
+
+下图显示了这个比较，其中蓝色的直方图表示原始（FP32）权重，红色的直方图表示反量化（从 INT8）权重。请注意，由于具有非常高的绝对值的异常值（稍后会详细讨论），我们只在 -2 和 2 之间显示这个图表。
+
+![](./assets/compare1.png)
+
+两个图形非常相似，在 0 附近有一个令人惊讶的峰值。这个峰值显示出我们的量化是相当有损的，因为逆过程不会输出原始值。对于 absmax 模型来说，这一点尤为明显，它在 0 附近显示出一个较低的谷底和一个较高的峰值。
+
+让我们比较原始模型和量化模型的性能。为此，我们定义了一个 generate_text() 函数，用于使用 top-k 采样生成 50 个 token。
+
+
+```
+def generate_text(model, input_text, max_length=50):
+    input_ids = tokenizer.encode(input_text, return_tensors='pt').to(device)
+    output = model.generate(inputs=input_ids,
+                            max_length=max_length,
+                            do_sample=True,
+                            top_k=30,
+                            pad_token_id=tokenizer.eos_token_id,
+                            attention_mask=input_ids.new_ones(input_ids.shape))
+    return tokenizer.decode(output[0], skip_special_tokens=True)
+
+# Generate text with original and quantized models
+original_text = generate_text(model, "I have a dream")
+absmax_text   = generate_text(model_abs, "I have a dream")
+zp_text       = generate_text(model_zp, "I have a dream")
+
+print(f"Original model:\n{original_text}")
+print("-" * 50)
+print(f"Absmax model:\n{absmax_text}")
+print("-" * 50)
+print(f"Zeropoint model:\n{zp_text}")
+```
+
+```
+Original model:
+I have a dream, but I'm scared I might fail."
+
+She did not say what she was scared of, but she certainly wasn't scared of what she will do if she tries any of these things. Even if it is just to
+--------------------------------------------------
+Absmax model:
+I have a dream about creating a museum museum. I will make the exhibit for children with disabilities, with children who suffer from developmental disabilities. Children suffer from developmental disabilities when they are younger than 5 years old. That makes me the perfect person. I
+--------------------------------------------------
+Zeropoint model:
+I have a dream of having it for free," said a woman who refused to identify, and whose address is in the South East Asian neighbourhood, in the town of Jamshed.
+
+In that case, she is a mother, grandmother and
+```
+
+我们可以通过计算每个输出的困惑度 (perplexity) 来量化其是否更具意义。困惑度是评估语言模型常用的指标，它衡量模型在预测序列中下一个 token 时的不确定性。在这个比较中，我们通常假设得分越低，模型越好。实际上，一个困惑度较高的句子也可能是正确的。
+
+我们使用一个简化的函数来实现它，因为它不需要考虑上下文窗口的长度等细节，由于我们的句子很短。
+
+```
+def calculate_perplexity(model, text):
+    # Encode the text
+    encodings = tokenizer(text, return_tensors='pt').to(device)
+
+    # Define input_ids and target_ids
+    input_ids = encodings.input_ids
+    target_ids = input_ids.clone()
+
+    with torch.no_grad():
+        outputs = model(input_ids, labels=target_ids)
+
+    # Loss calculation
+    neg_log_likelihood = outputs.loss
+
+    # Perplexity calculation
+    ppl = torch.exp(neg_log_likelihood)
+
+    return ppl
+
+ppl     = calculate_perplexity(model, original_text)
+ppl_abs = calculate_perplexity(model_abs, absmax_text)
+ppl_zp  = calculate_perplexity(model_zp, absmax_text)
+
+print(f"Original perplexity:  {ppl.item():.2f}")
+print(f"Absmax perplexity:    {ppl_abs.item():.2f}")
+print(f"Zeropoint perplexity: {ppl_zp.item():.2f}")
+```
+
+```
+Original perplexity:  11.11
+Absmax perplexity:    16.47
+Zeropoint perplexity: 17.60
+```
+
+我们可以看到原始模型的困惑度略低于其他两个模型。单个实验的可靠性不太高，但我们可以多次重复这个过程，以观察每个模型之间的差异。理论上，zero-poing 量化应该比 absmax 稍好，但计算成本也更高。
+
+在这个示例中，我们将量化技术应用于整个层（按张量基础）。然而，我们可以在不同的粒度级别上应用它：从整个模型到单个值。一次性对整个模型进行量化会严重降低性能，而对单个值进行量化会带来很大的开销。在实践中，我们通常更喜欢向量化 (vector-wise quantization) 的量化方法，它考虑了同一张量内行和列中值的变异性。
+
+然而，即使是向量化的量化也无法解决异常值特征的问题。异常值特征是指当模型达到一定规模（>6.7B 参数）时，在所有 Transformer 中出现的极端值（负值或正值）。这是一个问题，因为单个异常值可能会降低所有其他值的精度。但是丢弃这些异常值特征并不是一个选择，因为它将极大地降低模型的性能。
 
 
 
