@@ -70,7 +70,7 @@ $$
 X_{\rm dequant} = \frac{X_{\rm quant} - \rm zeropoint}{\rm scale} 
 $$
 
-假定有一个最大值为 3.2 和最小值为 -3.0，可以计算 $ \rm scale = \frac{255}{ 3.2 + 3.0}  = 41.13 $ 和 $\rm zeropoint = - \rm round(41.13 \cdot -3.0) - 128 = 123 - 128 = -5$，则之前的 0.1 量化为 $\rm round \left( \rm 41.13 \cdot 0.1 -5 \right) = -1 $，得到的结果和之前的 absmax 不同。
+假定有一个最大值为 3.2 和最小值为 -3.0，可以计算 $\rm scale = \frac{255}{ 3.2 + 3.0}  = 41.13$ 和 $\rm zeropoint = - \rm round(41.13 \cdot -3.0) - 128 = 123 - 128 = -5$，则之前的 0.1 量化为 $\rm round \left( \rm 41.13 \cdot 0.1 -5 \right) = -1$，得到的结果和之前的 absmax 不同。
 
 ![](./assets/naive_quantization.png)
 
