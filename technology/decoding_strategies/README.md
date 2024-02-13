@@ -349,7 +349,7 @@ Top-k 采样找到了一个新的序列："I have a dream job and I want to"，�
 
 换句话说，模型按降序检查其最有可能的 token，并将它们逐个添加到列表中，直到总概率超过阈值 $p$。与 top-k 采样不同，核采样中包含的 token 数量在每一步中都不同。这种变化通常会导致更多样化和创造性的输出，因此 Nucleus sampling 在文本生成等任务中很受欢迎。
 
-为了实现 Nucleus sampling 方法，我们可以在beam_search() 函数中使用 “nucleus” 参数。在本例中，我们将 $p$ 的值设置为 0.5。为了简化问题，我们将包含的最小 token 数量设为 beam 数量相等。我们还将考虑累积概率低于 $p$ 的令牌，而不是高于 $p$ 的 token。值得注意的是，虽然细节可能有所不同，但 Nucleus sampling 的核心思想保持不变。
+为了实现 Nucleus sampling 方法，我们可以在 beam_search() 函数中使用 “nucleus” 参数。在本例中，我们将 $p$ 的值设置为 0.5。为了简化问题，我们将包含的最小 token 数量设为 beam 数量相等。我们还将考虑累积概率低于 $p$ 的令牌，而不是高于 $p$ 的 token。值得注意的是，虽然细节可能有所不同，但 Nucleus sampling 的核心思想保持不变。
 
 ```
 def nucleus_sampling(logits, temperature, p, beams, plot=True):
@@ -421,4 +421,8 @@ plot_graph(graph, length, beams, 'sequence')
 
 在本文中，我们深入探讨了 LLM（大型语言模型），特别是 GPT-2 使用的各种解码方法。我们从简单的贪婪搜索开始，它立即选择最有可能的下一个 token，但往往是次优的选择。接下来，我们介绍了 beam search 技术，它在每个步骤中考虑了几个最有可能的令牌。尽管 beam search  提供了更细致的结果，但有时在生成多样化和创造性序列方面可能表现不佳。
 
-为了增加过程的变化性，我们接着介绍了 top-k 采样和核采样。top-k 采样通过在最有可能的 k 个令牌中随机选择来使文本生成更加多样化，而核采样则通过根据累加概率动态形成 token 核来选择不同的路径。每种方法都具有独特的优势和潜在的缺点，而您的项目的具体要求将在很大程度上决定它们之间的选择。
+为了增加过程的变化性，我们接着介绍了 top-k 采样和 Nucleus 采样。top-k 采样通过在最有可能的 k 个令牌中随机选择来使文本生成更加多样化，而 Nucleus 采样则通过根据累加概率动态形成 token 核来选择不同的路径。每种方法都具有独特的优势和潜在的缺点，而您的项目的具体要求将在很大程度上决定它们之间的选择。
+
+
+## 参考
+- https://mlabonne.github.io/blog/posts/2023-06-07-Decoding_strategies.html
