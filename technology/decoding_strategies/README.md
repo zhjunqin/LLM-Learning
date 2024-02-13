@@ -345,3 +345,80 @@ Top-k 采样找到了一个新的序列："I have a dream job and I want to"，�
 
 ## Nucleus sampling
 
+核采样（Nucleus sampling），也被称为 top-p 采样（top-p sampling），与 top-k 采样采用不同的方法。核采样不是选择最有可能的前 k 个令牌，而是选择一个截断值 $p$，使得所选 token 的概率总和超过 $p$。这形成了一个 Nucleus token 集合，我们可以从中随机选择下一个 token。
+
+换句话说，模型按降序检查其最有可能的 token，并将它们逐个添加到列表中，直到总概率超过阈值 $p$。与 top-k 采样不同，核采样中包含的 token 数量在每一步中都不同。这种变化通常会导致更多样化和创造性的输出，因此 Nucleus sampling 在文本生成等任务中很受欢迎。
+
+为了实现 Nucleus sampling 方法，我们可以在beam_search() 函数中使用 “nucleus” 参数。在本例中，我们将 $p$ 的值设置为 0.5。为了简化问题，我们将包含的最小 token 数量设为 beam 数量相等。我们还将考虑累积概率低于 $p$ 的令牌，而不是高于 $p$ 的 token。值得注意的是，虽然细节可能有所不同，但 Nucleus sampling 的核心思想保持不变。
+
+```
+def nucleus_sampling(logits, temperature, p, beams, plot=True):
+    assert p > 0
+    assert p <= 1
+
+    # Sort the probabilities in descending order and compute cumulative probabilities
+    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+    probabilities = torch.nn.functional.softmax(sorted_logits / temperature, dim=-1)
+    cumulative_probabilities = torch.cumsum(probabilities, dim=-1)
+
+    # Create a mask for probabilities that are in the top-p
+    mask = cumulative_probabilities < p
+
+    # If there's not n index where cumulative_probabilities < p, we use the top n tokens instead
+    if mask.sum() > beams:
+        top_p_index_to_keep = torch.where(mask)[0][-1].detach().cpu().tolist()
+    else:
+        top_p_index_to_keep = beams
+
+    # Only keep top-p indices
+    indices_to_remove = sorted_indices[top_p_index_to_keep:]
+    sorted_logits[indices_to_remove] = float('-inf')
+
+    # Sample n tokens from the resulting distribution
+    probabilities = torch.nn.functional.softmax(sorted_logits / temperature, dim=-1)
+    next_tokens = torch.multinomial(probabilities, beams)
+
+    # Plot distribution
+    if plot:
+        total_prob = torch.nn.functional.softmax(logits / temperature, dim=-1)
+        plot_prob_distribution(total_prob, next_tokens, 'nucleus', top_p_index_to_keep)
+
+    return next_tokens
+
+# Start generating text
+beam_search(input_ids, 0, bar, length, beams, 'nucleus', 1)
+```
+
+![](./assets/topp1.gif)
+
+
+在这个图表中，您可以看到 nucleus 中包含的 token 数量变化很大。生成的概率分布差异很大，导致选择的 token 并不总是最有可能的令牌。这为生成独特和多样化的序列打开了大门。现在，让我们观察一下生成的文本。
+
+```
+sequence, max_score = get_best_sequence(graph)
+print(f"Generated text: {sequence}")
+```
+
+```
+Generated text: I have a dream. I'm going to
+```
+
+Nucleus sampling 生成了序列：“I have a dream. I'm going to”，与贪婪采样相比，它在语义连贯性方面有明显的提升。
+
+为了比较决策路径，让我们可视化 Nucleus sampling 生成的新决策树。
+
+```
+# Plot graph
+plot_graph(graph, length, beams, 'sequence')
+```
+
+![](./assets/beam3.png)
+
+与 top-k 采样一样，这个决策树与贪婪采样生成的决策树非常不同，展示了更多的变化。无论是 top-k 采样还是 Nucleus 采样，在生成文本时都提供了独特的优势，增加了多样性，并向输出引入了创造性。在两种方法（甚至贪婪搜索）之间的选择将取决于您项目的具体需求和约束条件。
+
+
+## 总结
+
+在本文中，我们深入探讨了 LLM（大型语言模型），特别是 GPT-2 使用的各种解码方法。我们从简单的贪婪搜索开始，它立即选择最有可能的下一个 token，但往往是次优的选择。接下来，我们介绍了 beam search 技术，它在每个步骤中考虑了几个最有可能的令牌。尽管 beam search  提供了更细致的结果，但有时在生成多样化和创造性序列方面可能表现不佳。
+
+为了增加过程的变化性，我们接着介绍了 top-k 采样和核采样。top-k 采样通过在最有可能的 k 个令牌中随机选择来使文本生成更加多样化，而核采样则通过根据累加概率动态形成 token 核来选择不同的路径。每种方法都具有独特的优势和潜在的缺点，而您的项目的具体要求将在很大程度上决定它们之间的选择。
