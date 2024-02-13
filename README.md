@@ -24,7 +24,8 @@ LLM 学习笔记。
 - Rotary position embedding
 - KV Cache
 - RMSNorm
-- Quantization 量化()
+- [Quantization 量化](./technology/Quantization/README.md)
+- [Decoding Strategies](./technology/decoding_strategies/README.md)
 
 ## Training
 - [DeepSpeed](./DeepSpeed/README.md)
