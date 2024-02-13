@@ -27,15 +27,15 @@ print(f"Generated text: {generated_text}")
 Generated text: I have a dream of being a doctor.
 ```
 
-似乎是 GPT-2 生成了句子 “I have a dream of being a doctor”。然而，GPT-2并没有完全产生这个句子。
+似乎是 GPT-2 生成了句子 “I have a dream of being a doctor”。然而，GPT-2 并不是直接生成这个句子。
 
-有一个常见的误解，认为像 GPT-2 这样的 LLM 直接生成文本。事实并非如此。相反，LLM 计算 logits，即为其词汇表中的每个可能的标记分配得分。为了简化说明，以下是这个过程的图解解释：
+有一个常见的误解，认为像 GPT-2 这样的 LLM 直接生成文本。事实并非如此。相反，LLM 计算 logits，为其词汇表中的每个可能的 token 分配得分。为了简化说明，以下是这个过程的图解解释：
 
 ![](./assets/example1.png)
 
 这里，tokenizer（此处为 [Byte-Pair Encoding](https://en.wikipedia.org/wiki/Byte_pair_encoding) ）将输入文本中的每个 token 转换为相应的 token ID。然后，GPT-2 使用这些 token ID 作为输入，尝试预测最有可能的下一个 token。最后，模型生成 logits，这些 logits 通过 softmax 函数转换为概率。
 
-例如，模型将在 “I have a dream” 后面的 “of” 上分配一个 17% 的概率。这个输出实际上代表了序列中潜在的下一个 token 的按排名排序的列表。更正式地，我们将这个概率表示为 $P( of | I\,have \,a\,dream) = 17$ 。
+例如，模型将在 “I have a dream” 后面的 “of” 上分配一个 17% 的概率。这个输出实际上代表了序列中潜在的下一个 token 的排序列表。更正式地，我们将这个概率表示为 $P( of | I\,have \,a\,dream) = 17%$ 。
 
 像 GPT 这样自回归的模型基于前序输入的 token 来预测序列中的下一个 token。这个序列的联合概率 $P(W)$ 可以分解为：
 
@@ -43,7 +43,7 @@ $$
 P(s)=P(w_1,w_2,...,w_t)=\displaystyle \prod_i^t P(w_i|w_1,w_2,...,w_{i−1})
 $$
 
-对于序列中的每一个 token $w_i$，$P(w_i|w_1,w_2,...,w_{i−1})$ 表示给定前序 token $(w_1,w_2,...,w_{i−1})$下，输出 $w_t$的条件概率。 GPT-2 计算词表 5027 个 token 中的每一个 token 的概率。
+对于序列中的每一个 token $w_i$，$P(w_i|w_1,w_2,...,w_{i−1})$ 表示给定前序 token $(w_1,w_2,...,w_{i−1})$下，输出 $w_t$ 的条件概率。 GPT-2 计算词表 50257 个 token 中的每一个 token 的概率。
 
 这里引申出了一个问题：如何使用这些概率来生成文本？这就是解码策略(decoding strategies)发挥作用的地方，比如贪婪搜索(greedy search)和束搜索(beam search)。
 
@@ -51,13 +51,13 @@ $$
 
 贪婪搜索是一种解码方法，它将每一步中最有可能的 token 作为序列中的下一个 token。简单来说，它只保留每个阶段中最可能的 token，舍弃所有其他潜在选项。以我们的例子为例：
 
-步骤1：输入：“I have a dream” → 最可能的 token：“ of”
-步骤2：输入：“I have a dream of” → 最可能的 token：“ being”
-步骤3：输入：“I have a dream of being” → 最可能的 token：“ a”
-步骤4：输入：“I have a dream of being a” → 最可能的 token：“ doctor”
-步骤5：输入：“I have a dream of being a doctor” → 最可能的 token：“.”
+- 步骤1：输入：“I have a dream” → 最可能的 token：“ of”
+- 步骤2：输入：“I have a dream of” → 最可能的 token：“ being”
+- 步骤3：输入：“I have a dream of being” → 最可能的 token：“ a”
+- 步骤4：输入：“I have a dream of being a” → 最可能的 token：“ doctor”
+- 步骤5：输入：“I have a dream of being a doctor” → 最可能的 token：“.”
 
-虽然这种方法看起来很直观，但是要注意，贪婪搜索是目光短浅的：它只考虑每一步中最有可能的 token，而不考虑对序列的整体影响。这种特性使其快速高效，因为它不需要跟踪多个序列，但这也意味着它可能错过了概率比较低一些的 token 生成的更好序列。
+虽然这种方法看起来很直观，但是要注意，贪婪搜索是目光短浅的：它只考虑每一步中最有可能的 token，而不考虑对序列的整体影响。这种特性使其快速高效，因为它不需要跟踪多个可能的序列，但这也意味着它可能错过了概率比较低一些的 token 但能生成更好序列。
 
 接下来，让我们使用 Graphviz 和 Networkx 来说明贪婪搜索的实现。我们选择具有最高分数的 token ID，计算其对数概率（我们取对数以简化计算），并将其添加到树中。我们将重复这个过程五次。
 
@@ -127,7 +127,7 @@ print(f"Generated text: {output}")
 Generated text: I have a dream of being a doctor.
 ```
 
-贪婪搜索生成了与 transformers 库中的文本相同的结果：“I have a dream of being a doctor。”让我们可视化我们创建的树结构。
+贪婪搜索生成了与 transformers 库中的文本相同的结果：“I have a dream of being a doctor.”。让我们可视化我们创建的树结构。
 
 ```
 import matplotlib.pyplot as plt
