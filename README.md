@@ -31,6 +31,7 @@ LLM 学习笔记。
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
 - [优化器](./training/optimizer/README.md)
+- [Llama2 微调](./training/fine_tune/llama2_fine_tune.md)
 
 ## Inference
 - [llama.cpp](./inference/llama.cpp/README.md)
