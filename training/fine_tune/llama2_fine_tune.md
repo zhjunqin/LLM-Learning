@@ -41,7 +41,6 @@ User prompt [/INST] Model answer </s>
 !pip install accelerate peft bitsandbytes transformers trl tensorboard
 ```
 
-
 ```
 import os
 import torch
@@ -59,8 +58,9 @@ from peft import LoraConfig, PeftModel
 from trl import SFTTrainer
 ```
 
+### 执行 base 模型
 
-然后我们执行一下加载的模型 llama-2-7b-chat-hf，尝试问几个问题，看会得到什么回复，后面跟微调过的模型进行对比。
+然后我们先执行一下 base 模型 llama-2-7b-chat-hf，尝试问几个问题，看会得到什么回复，后面跟微调过的模型进行对比。
 
 ```
 model_name = "NousResearch/llama-2-7b-chat-hf"
@@ -79,9 +79,66 @@ print(result[0]['generated_text'])
 ```
 
 ```
+<s>[INST] What is a large language model? [/INST]  A large language model is a type of artificial intelligence (AI) model that is trained on a large corpus of text data to generate language outputs that are coherent and natural-sounding. The model is designed to learn the patterns and structures of language by analyzing a large amount of text data, such as books, articles, and websites.
 
+The size of a large language model can vary, but it is typically measured in terms of the number of parameters or the amount of training data used to train the model. Some common types of large language models include:
+
+1. Transformer-based models: These models are based on the Transformer architecture, which was introduced in 2017 and has since become a popular choice for natural language processing tasks. Transformer-based models are trained on large amounts of text data and use self-attention mechanisms to learn the relationships between
 ```
 
+```
+prompt = "Who is Leonardo Da Vinci?"
+pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_length=200)
+result = pipe(f"<s>[INST] {prompt} [/INST]")
+print(result[0]['generated_text'])
+```
+
+```
+<s>[INST] Who is Leonardo Da Vinci? [/INST]  Leonardo da Vinci (1452-1519) was a true Renaissance man - an Italian polymath, artist, inventor, engineer, and scientist. He is widely considered one of the most diversely talented individuals to have ever lived.
+
+Da Vinci was born in Vinci, Italy, and was the illegitimate son of a notary named Ser Piero and a peasant woman named Caterina Buti. Despite his humble beginnings, he went on to become one of the most renowned artists of the Renaissance, known for his iconic paintings such as the Mona Lisa and The Last Supper.
+
+In addition to his artistic pursuits, Da Vinci was also a prolific inventor and engineer. He designed flying machines, armored vehicles, and submarines, as well as invent
+```
+```
+prompt = "I have 25 coins each weighing 1tr.oz in a closed cylindrical tube weighing 6.5g. The tube is 10.6cm long and has a diameter of .8in. What is the SI-unit density of the tube, disregarding any air inside it?"
+
+回答：
+<s>[INST] I have 25 coins each weighing 1tr.oz in a closed cylindrical tube weighing 6.5g. The tube is 10.6cm long and has a diameter of .8in. What is the SI-unit density of the tube, disregarding any air inside it? [/INST]  To find the SI-unit density of the tube, we need to divide the mass of the tube by its volume.
+
+The volume of the tube can be calculated using the formula for the volume of a cylinder:
+
+V = πr²h
+
+where r is the radius of the tube and h is its height (in this case, the length of the tube).
+
+The radius of the tube is half the diameter, so:
+
+r = 0.8in / 2 = 0.4in
+```
+
+
+```
+prompt = "你是一位宋词学者，帮助我学习一些宋词相关的知识。"
+
+回答：
+<s>[INST] 你是一位宋词学者，帮助我学习一些宋词相关的知识。 [/INST]  Ah, a fellow seeker of knowledge! 😊 As a Song Dynasty scholar, I'd be delighted to share some insights and tips on learning about Song Dynasty-related knowledge.
+
+1. Start with the basics: Begin by familiarizing yourself with the key historical events, cultural practices, and literary works of the Song Dynasty (960-1279 AD). This will provide a solid foundation for your studies.
+2. Read the classics: The Song Dynasty was a period of great literary achievement, and many of the works from this era are still studied and admired today. Some of the most famous works include "The Classic of Poetry,"
+```
+
+后面两条是从数据集 [mlabonne/guanaco-llama2-1k](https://huggingface.co/datasets/mlabonne/guanaco-llama2-1k) 摘选出来的。
+
+```
+<s>[INST] I have 25 coins each weighing 1tr.oz in a closed cylindrical tube weighing 6.5g. The tube is 10.6cm long and has a diameter of .8in. What is the SI-unit density of the tube, disregarding any air inside it? [/INST] 1 troy ounce = 31.1 g Total mass = 25 coins * 31.1 g/coin + 6.5 g = 784.0 g 1 inch = 2.54 cm Volume = L * pi * r^2 = 10.6 cm * 3.14 * (0.8 in * 2.54 cm/in)^2 = 33.28 cm * (2.03 cm)^2 = 137.4 cm^3 Density = mass/volume = (784.0 g) / (137.4 cm^3) = 5.71 g/cm^3 </s><s>[INST] Based on coin density, what material are these coins made of? [/INST] The density of just the coins (disregarding the tube) is about 5.659 g/cm^3. Tin has a density of approximately 5.765 g/cm^3, making it a likely metal for the coins to be made of. </s>
+```
+
+```
+<s>[INST] 你是一位宋词学者，帮助我学习一些宋词相关的知识。 [/INST] 当然可以！宋词是中国文学史上的一部分，出现在公元960年至1279年的宋代。它是一种古典诗歌形式，具有独特的艺术魅力。学习宋词不仅能够了解中国古代文化，还能领略到当时诗人们丰富的情感与优美的文字。下面是一些关于宋词的基本知识： 1. 词牌名：宋词有严格的格律要求，每首词都有一个特定的词牌名。词牌名规定了词的字数、平仄、韵脚等要素。常见的词牌名有：水调歌头、浪淘沙、渔家傲等。 2. 作者：宋词有很多著名的词人，其中最为人们熟知的是苏轼、辛弃疾、李清照和柳永等。他们的作品代表了宋词的最高艺术成就。 3. 题材：宋词的题材丰富多样，包括咏史抒怀、山水田园、边塞戍楼、宫廷生活、节令风俗等。词人们以其独特的审美视角，将生活中的点滴化为诗篇，展现了当时的社会风貌。 4. 韵律：与古诗相比，宋词的韵律更加丰富多样。除了常规的平仄和对仗外，还有许多特殊的技巧，如倒装、押韵等。这些技巧使得宋词的语言更加优美，富有音乐性。 5. 艺术特色：宋词注重内在情感的表达，以“婉约”和“豪放”为主要艺术风格。婉约派以李清照为代表，诗词字里行间流露出悠扬、抒情的美；豪放派以苏轼为代表，作品中展现出豪迈、奔放的精神。 了解以上基本知识后，你可以尝试阅读一些宋词作品，体会其中的美感。同时，你还可以学习一些有关宋词的评论与研究，以便更深入地理解和欣赏这一艺术形式。希望这些信息对你有所帮助！ </s>
+```
+
+### 微调 base 模型
 
 让我们稍微谈谈我们可以在这里调整的参数。首先，我们想要加载一个 llama-2-7b-chat-hf 模型，并在 mlabonne/guanaco-llama2-1k（1,000 个样本）上进行训练，这将生成我们的微调模型 llama-2-7b-miniguanaco。如果您对如何创建这个数据集感兴趣，可以查看这个notebook。随意更改它：Hugging Face Hub上有许多很好的数据集，如databricks/databricks-dolly-15k。
 
