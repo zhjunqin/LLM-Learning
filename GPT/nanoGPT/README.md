@@ -612,3 +612,30 @@ transformer.h.0.mlp.c_proj.weight :  torch.Size([384, 1536]) :  589824
 
 total: 1,770,240
 ```
+
+## KV Cache
+
+如果想要使用 KV Cache，可以添加如下代码：
+
+```
+        if self.use_cache:
+            past_k, past_v = self.past_key_values
+            if past_k is not None:
+                k = torch.cat((past_k, k), dim=1) # torch.Size([1, 45, 384]) -> torch.Size([1, 46, 384])
+            if past_v is not None:
+                v = torch.cat((past_v, v), dim=1)
+            self.past_key_values = (k, v)
+            T = k.shape[1] # 更新 concat 后的序列长度
+            q_len = q.shape[1] # 获取 Query 的序列长度
+```
+
+这里需要注意 position Embedding 的生成。使用 KV cache 每次推理只将最新生成的 id 送入模型。但是这个时候最新 id 的 position 需要对应增加。
+
+```
+        pos = torch.arange(past_len, past_len+t,
+                           dtype=torch.long, device=device)  # shape (t)
+```
+
+比如 prefilling 阶段的 id 数量为 10，这 10 个 id 的 position 为 0 到 9，则最新生成 id 的 position 为 10。
+
+但是当 token id 数量超过了最大长度后，之前的 id 会被截断，并重新从 0 开始赋值 postion，这里的 KV Cache 就会有问题了。因为 KV Cache 保存的是使用旧的 position embedding。我理解这里也说明了使用绝对位置编码超过最大长度后无法很好的使用 KV Cache。
