@@ -36,7 +36,7 @@ LLM 学习笔记。
 ## Inference
 - [llama.cpp](./inference/llama.cpp/README.md)
 - [vllm](./inference/vllm/README.md)
-- [TRT-LLM](./inference/TRT-LLM/README.md)
+- [TRT-LLM](./inference/TRT-LLM/)
 
 ## 其他
 
