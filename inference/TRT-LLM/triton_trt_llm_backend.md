@@ -254,6 +254,8 @@ def get_cmd(world_size, tritonserver, grpc_port, http_port, metrics_port,
 curl -X POST localhost:8000/v2/models/${MODEL_NAME}/generate -d '{"{PARAM1_KEY}": "{PARAM1_VALUE}", ... }'
 ```
 
+请求 ensemble 模型
+
 ```
 # curl -X POST localhost:8000/v2/models/ensemble/generate -d '{"text_input": "What is machine learning?", "max_tokens": 20, "bad_words": "", "stop_words": ""}' | jq
 {
@@ -275,6 +277,8 @@ curl -X POST localhost:8000/v2/models/${MODEL_NAME}/generate -d '{"{PARAM1_KEY}"
 ```
 "text_output": "\n\nMachine learning is a method of learning by using machine learning algorithms to solve problems.\n\n"
 ```
+
+请求 tensorrt_llm_bls 模型
 
 ```
 # curl -X POST localhost:8000/v2/models/tensorrt_llm_bls/generate -d '{"text_input": "What is machine learning?", "max_tokens": 20, "bad_words": "", "stop_words": ""}' | jq
