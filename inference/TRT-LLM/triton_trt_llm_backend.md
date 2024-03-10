@@ -55,12 +55,16 @@ cp tensorrt_llm/examples/gpt/engines/fp16/1-gpu/* triton_model_repo/tensorrt_llm
 
 ## 修改配置参数
 
+#### preprocessing 的 config.pbtxt
+
 *triton_model_repo/preprocessing/config.pbtxt*
 
 |       Name       |                               Description                                |
 | :--------------: | :----------------------------------------------------------------------: |
 | `tokenizer_dir`  |                         模型的 tokenizer 路径。                          |
 | `tokenizer_type` | 模型的 tokenizer 类型, 支持 `t5`, `auto` 和 `llama`。这里可以使用 `auto` |
+
+#### tensorrt_llm 的 config.pbtxt
 
 *triton_model_repo/tensorrt_llm/config.pbtxt*
 
@@ -79,6 +83,8 @@ cp tensorrt_llm/examples/gpt/engines/fp16/1-gpu/* triton_model_repo/tensorrt_llm
 |      `normalize_log_probs`       |                                                                                                                                                                                                      可选项(默认为 `true`). 设置为 `false` 来跳过`output_log_probs` 的正则化。                                                                                                                                                                                                      |
 |     `enable_chunked_context`     |                                                                                                                                                                                                            可选项(默认为 `false`). 将其设置为 `true` 以启用上下文分块。                                                                                                                                                                                                             |
 |         `decoding_mode`          | 可选项. 设置为以下之一：{top_k, top_p, top_k_top_p, beam_search}，以选择解码模式。top_k 模式仅使用 Top-K 算法进行采样，top_p 模式仅使用 Top-P 算法进行采样。top_k_top_p 模式根据请求的运行时采样参数同时使用 Top-K 和 Top-P 算法。请注意，top_k_top_p 选项需要更多内存，并且运行时间比单独使用 top_k 或 top_p 更长；因此，只有在必要时才应使用它。beam_search 使用 beam search 算法。如果未指定，默认情况下，如果 max_beam_width == 1，则使用 top_k_top_p；否则，使用 beam_search。 |
+
+#### postprocessing 的 config.pbtxt
 
 *triton_model_repo/postprocessing/config.pbtxt*
 
