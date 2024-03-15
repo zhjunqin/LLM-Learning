@@ -12,10 +12,11 @@ LLM 学习笔记。
 - [Transformer](./nlp/transformer/README.md)
 - [Perplexity](./nlp/Perplexity.md)
 
-## GPT repos
+## GPT models
 - [Nano GPT](./GPT/nanoGPT/README.md)
 - [MiniGPT-4](./GPT/miniGPT4/README.md)
 - [TinyLlama](./GPT/TinyLlama/README.md)
+- [LLAMA](./GPT/Llama/README.md)
 
 ## 关键技术
 - [FP32/FP16/BF16](./technology/precision/fp32_fp16_bf16.md)
@@ -27,6 +28,7 @@ LLM 学习笔记。
 - [Quantization 量化](./technology/Quantization/README.md)
 - [Decoding Strategies](./technology/decoding_strategies/README.md)
 
+
 ## Training
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
@@ -37,6 +39,7 @@ LLM 学习笔记。
 - [llama.cpp](./inference/llama.cpp/README.md)
 - [vllm](./inference/vllm/README.md)
 - [TRT-LLM](./inference/TRT-LLM/)
+- [MLC-LLM](./inference/MLC-LLM/)
 
 ## 其他
 
