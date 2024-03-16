@@ -45,7 +45,7 @@ LLM 学习笔记。
 
 ## 深度学习编译技术
 
-- [Machine Learning Compilation 课程](./)
+- [Machine Learning Compilation 课程](./Compilation/machine_learning_compilation.md)
 
 
 ## 其他
