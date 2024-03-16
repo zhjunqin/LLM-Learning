@@ -376,6 +376,115 @@ pool.join()
 
 在 3090 上用 nsys profilling 执行一次 Llama7B 的结果。
 
+```
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)     Med (ns)    Min (ns)    Max (ns)   StdDev (ns)           Name
+ --------  ---------------  ---------  -----------  -----------  ---------  ----------  -----------  ----------------------
+     39.2       5807438196         69   84165771.0  100117953.0       5401   100186558   35418504.5  poll
+     37.2       5500792484         11  500072044.0  500068721.0  500063478   500093298       9134.5  pthread_cond_timedwait
+      8.9       1310443062          6  218407177.0      56455.5      50810  1309490457  534519530.7  waitpid
+      7.4       1096180956      21057      52057.8       1059.0        310    18336228     682999.7  read
+      3.6        532318517        101    5270480.4    5363401.0       2135    18202404    3488800.3  pthread_mutex_lock
+      2.1        309710927       4086      75798.1      22153.5        345    16546823     405506.0  ioctl
+      0.7        110780848      40933       2706.4       2254.0        533      122976       1980.7  stat64
+      0.4         60729824      11327       5361.5       4880.0       1233       99998       2659.1  open64
+      0.2         27659489      20896       1323.7       1236.0        687      133279       1049.1  fstat64
+      0.2         23421890     509737         45.9         41.0         30       49419         97.3  pthread_cond_signal
+      0.0          4683161       1576       2971.5        806.0        396      208511       8292.9  mmap
+      0.0          3794308        343      11062.1       5357.0       1216     1068752      57980.6  mmap64
+      0.0          3386428        147      23036.9      26235.0       1292       40381       9528.9  fopen64
+      0.0          2683602       1251       2145.2       1859.0        958       13185        946.2  lstat64
+      0.0          2218646        697       3183.1       1227.0        743      259729      10347.9  munmap
+      0.0          1589510          8     198688.8     239710.0        632      352217     133692.5  pthread_rwlock_wrlock
+      0.0          1385715        293       4729.4       2573.0        588       15877       4122.0  fclose
+      0.0          1123094        298       3768.8       1947.0        987       91342       6210.5  open
+      0.0          1063170        181       5873.9       3235.0       1144       37989       6280.3  fopen
+      0.0           698181          9      77575.7      44084.0      39938      320730      91633.9  sem_timedwait
+      0.0           337792          4      84448.0      79112.5      50349      129218      33131.8  pthread_create
+      0.0           326019         27      12074.8      13419.0        841       26250       6762.3  write
+      0.0           209551        879        238.4        180.0         31        2723        253.0  sigaction
+      0.0           184795         11      16799.5      16819.0      11355       22716       3375.5  socket
+      0.0           138865         32       4339.5       4499.0       1125        6199       1072.0  stat
+      0.0           116320         54       2154.1         72.5         53       68068      10962.8  fgets
+      0.0            92774         17       5457.3       2931.0       1573       11718       3771.0  pipe2
+      0.0            72087        197        365.9        288.0        194        1614        233.8  fcntl
+      0.0            56942          8       7117.8       7146.0       3603        9417       1832.1  fread
+      0.0            54027          9       6003.0       6345.0       3499        8203       1697.0  bind
+      0.0            33293          2      16646.5      16646.5      11271       22022       7602.1  connect
+      0.0            31022        169        183.6         51.0         47        2272        365.0  fflush
+      0.0            15061         28        537.9        580.5        213         904        200.3  dup
+      0.0            11300         10       1130.0        989.0        253        2282        810.5  dup2
+      0.0            11264          7       1609.1       1618.0       1448        1751         95.0  fstat
+      0.0             8857        128         69.2         40.5         38         547         89.0  pthread_mutex_trylock
+      0.0             3820          2       1910.0       1910.0       1494        2326        588.3  listen
+      0.0             2696         47         57.4         56.0         37         424         55.6  flockfile
+      0.0              922          1        922.0        922.0        922         922          0.0  getc
+
+[5/8] Executing 'cuda_api_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls  Avg (ns)   Med (ns)   Min (ns)  Max (ns)  StdDev (ns)            Name
+ --------  ---------------  ---------  ---------  ---------  --------  --------  -----------  -------------------------
+     54.8       1558000756        842  1850357.2  2964458.0      2131  30823067    1721285.5  cudaFree
+     20.0        569058633       9579    59406.9     2970.0      2056   9220258     452913.5  cudaMemcpyAsync
+     17.4        494212618     129507     3816.1     3750.0      2588    367573       2021.7  cuLaunchKernel
+      4.1        117996729      26400     4469.6     4358.5      3318    296618       2029.7  cudaLaunchKernel
+      2.2         62071737        855    72598.5     8631.0      2456    379777     101832.7  cudaMalloc
+      0.9         25009429        855    29250.8    25743.0      7154    154082      18284.5  cudaMemGetInfo
+      0.5         13492474       2476     5449.3     3202.0      1257     46462       9025.0  cudaStreamSynchronize
+      0.1          1513093          1  1513093.0  1513093.0   1513093   1513093          0.0  cuModuleLoadData
+      0.0          1143410        442     2586.9     2478.0      2248     10516        575.6  cudaEventRecord
+      0.0          1115882        442     2524.6     2424.0      2068     10150        575.6  cudaEventCreate
+      0.0           708189        442     1602.2     1538.0      1395      9420        414.2  cudaStreamWaitEvent
+      0.0           504210        442     1140.7     1088.5       986     10024        440.6  cudaEventDestroy
+      0.0           418131          1   418131.0   418131.0    418131    418131          0.0  cuModuleUnload
+      0.0            37110          1    37110.0    37110.0     37110     37110          0.0  cudaStreamDestroy
+      0.0            36743          1    36743.0    36743.0     36743     36743          0.0  cudaStreamCreateWithFlags
+      0.0             8613          2     4306.5     4306.5      3129      5484       1665.2  cuModuleGetLoadingMode
+
+[6/8] Executing 'cuda_gpu_kern_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                                                  Name                     
+ --------  ---------------  ---------  --------  --------  --------  --------  -----------  ----------------------------------------------------------------------------------------------------
+     33.7        868195826      14112   61521.8   61503.0     60895     63105        237.9  fused_fused_dequantize3_NT_matmul12_kernel                               
+     20.7        531656812      14112   37674.1   37600.0     36704     44447        513.5  fused_fused_dequantize4_NT_matmul13_kernel                               
+     19.8        509990408      14112   36138.8   36096.0     35520     37983        244.8  fused_fused_dequantize1_NT_matmul10_kernel                               
+      8.5        217979171      14112   15446.4   15391.0     14624     18208        385.4  fused_fused_dequantize2_NT_matmul11_kernel                               
+      4.7        121957567      12256    9950.8   10304.0      5664     14145       2291.1  void flashinfer::BatchDecodeWithPagedKVCacheKernel<(bool)1, (flashinfer::PosEncodingMode)0, (unsign…
+      3.8         97715150      28288    3454.3    3424.0      3072      6016        101.7  fuse_add_norm_prefill_kernel                                             
+      1.5         39378179        442   89090.9   88927.0     88001     93664        823.1  fused_fused_dequantize_fused_NT_matmul14_cast_kernel                     
+      1.3         33453303      14144    2365.2    2336.0      2112     12608        485.2  fused_rope_kernel                                                        
+      1.1         29047351      14112    2058.3    2048.0      1952      2400         50.6  fused_split2_silu2_multiply2_kernel                                      
+      1.1         28764808      12256    2347.0    2240.0      2144      3009        217.2  void flashinfer::VariableLengthMergeStatesKernel<(unsigned int)8, (unsigned int)16, (unsigned int)8…
+      1.0         25047859      14144    1770.9    1760.0      1696      4384        126.2  tir_kv_cache_transpose_append_kernel                                     
+      0.9         24090868        442   54504.2   54240.0     52927     60127       1221.4  softmax_kernel                                                           
+      0.4         11331681         32  354115.0  354047.5    353599    354975        326.3  fused_fused_dequantize3_NT_matmul7_kernel_2                              
+      0.4         10465797       1856    5638.9    5632.0      5120      6240        159.6  void flashinfer::BatchDecodeWithPagedKVCacheKernel<(bool)0, (flashinfer::PosEncodingMode)0, (unsign…
+      0.4          9963941         32  311373.2  311359.0    310623    312255        399.7  fused_fused_dequantize4_NT_matmul8_kernel_2                              
+      0.3          7563149         32  236348.4  236303.5    235551    237504        441.2  fused_fused_dequantize1_NT_matmul5_kernel_2                              
+      0.1          3792886         32  118527.7  118512.0    117919    119136        315.6  fused_fused_dequantize2_NT_matmul6_kernel_2                              
+      0.0          1188474        442    2688.9    2688.0      2495      2976         69.1  divide_kernel                                                            
+      0.0          1103582        441    2502.5    2496.0      2432      2784         57.3  rms_norm2_kernel                                                         
+      0.0           749467        442    1695.6    1664.0      1631      5216        176.1  fused_fused_dequantize_take1_kernel                                      
+      0.0           419200         32   13100.0   13056.0     12992     13856        149.2  void flashinfer::BatchPrefillWithRaggedKVCacheKernel<(unsigned int)1, (bool)1, (flashinfer::QKVLayo…
+      0.0           409534         32   12797.9   12800.0     12576     12896         53.3  fused_split_silu_multiply_kernel                                         
+      0.0             3776          1    3776.0    3776.0      3776      3776          0.0  rms_norm_kernel                                                          
+      0.0             1664          1    1664.0    1664.0      1664      1664          0.0  index_kernel                                                             
+
+[7/8] Executing 'cuda_gpu_mem_time_sum' stats report
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     99.1        469053982   7929   59156.8     448.0       415   9043943     481621.6  [CUDA memcpy Host-to-Device]
+      0.9          4341056   1650    2630.9    1408.0      1247      6912       2074.9  [CUDA memcpy Device-to-Host]
+
+[8/8] Executing 'cuda_gpu_mem_size_sum' stats report
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)           Operation
+ ----------  -----  --------  --------  --------  --------  -----------  ----------------------------
+   3790.828   7929     0.478     0.000     0.000    65.536        3.765  [CUDA memcpy Host-to-Device]
+     56.584   1650     0.034     0.000     0.000     0.128        0.057  [CUDA memcpy Device-to-Host]
+
+```
+
 ### 总结
 
 至此基本总结如上。
