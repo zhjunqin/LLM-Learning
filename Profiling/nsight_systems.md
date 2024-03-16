@@ -2,7 +2,7 @@
 
 https://docs.nvidia.com/nsight-systems/UserGuide/index.html
 
-# CLI
+## CLI
 
 使用帮助
 
@@ -35,7 +35,7 @@ https://docs.nvidia.com/nsight-systems/UserGuide/index.html
 | stats   | 从现有的 nsys-rep 或 SQLite 文件生成统计数据。               |
 
 
-## 示例
+### 示例
 
 ```
 nsys profile --stats=true --sample=cpu --trace=cuda,cudnn,cublas,nvtx,osrt,oshmem  ./my_bin
@@ -47,7 +47,7 @@ nsys stats report1.sqlite
 
 
 
-# Jetson 如何在容器中使用 nsys
+### Jetson 如何在容器中使用 nsys
 
 https://forums.developer.nvidia.com/t/nsight-systems-profiling-in-l4t-container/191072
 
