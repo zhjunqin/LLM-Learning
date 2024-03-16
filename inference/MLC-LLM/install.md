@@ -57,7 +57,7 @@ chmod +x llvm.sh
 sudo ./llvm.sh <version number> all
 
 示例：
-sudo ./llvm.sh 15 all # 有时候必须用 all，不然会缺少一些库
+sudo ./llvm.sh 15 all # 有时候必须用 all，不然会缺少一些库，比如 /usr/lib/llvm-15/lib/libPolly.a
 ```
 
 - 代码编译
