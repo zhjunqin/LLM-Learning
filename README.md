@@ -41,7 +41,12 @@ LLM 学习笔记。
 - [MLC-LLM](./inference/MLC-LLM/)
 
 ## Profiling
-- [Nsight Systems]
+- [Nsight Systems](./Profiling/nsight_systems.md)
+
+## 深度学习编译技术
+
+- [Machine Learning Compilation 课程](./)
+
 
 ## 其他
 

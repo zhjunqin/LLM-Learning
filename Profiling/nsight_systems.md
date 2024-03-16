@@ -53,6 +53,8 @@ https://forums.developer.nvidia.com/t/nsight-systems-profiling-in-l4t-container/
 
 mount the Nsight Systems folder to enable access
 
+https://repo.download.nvidia.com/jetson/#Jetpack%206.0_DP
+
 ```
 $ docker run -it --rm --net=host --runtime nvidia -v /opt/nvidia/nsight-systems-cli/:/opt/nvidia/nsight-systems-cli nvcr.io/nvidia/l4t-base:r32.5.0
 ```
