@@ -140,7 +140,7 @@ prompt = "你是一位宋词学者，帮助我学习一些宋词相关的知识�
 
 ### 微调 base 模型
 
-让我们稍微谈谈我们可以在这里调整的参数。首先，我们想要加载一个 llama-2-7b-chat-hf 模型，并在 mlabonne/guanaco-llama2-1k（1,000 个样本）上进行训练，这将生成我们的微调模型 llama-2-7b-miniguanaco。如果您对如何创建这个数据集感兴趣，可以查看这个notebook。随意更改它：Hugging Face Hub上有许多很好的数据集，如databricks/databricks-dolly-15k。
+让我们稍微谈谈我们可以在这里调整的参数。首先，我们想要加载一个 llama-2-7b-chat-hf 模型，并在 mlabonne/guanaco-llama2-1k（1,000 个样本）上进行训练，这将生成我们的微调模型 llama-2-7b-miniguanaco。Hugging Face Hub 上有许多其他很好的数据集，如 databricks/databricks-dolly-15k。
 
 QLoRA 将使用 64 rank 和 16 lora_alpha。我们将使用 NF4 类型直接以 4-bit 精度加载 Llama2 模型，并对其进行 1 个 epoch 的训练。要获取有关其他参数的更多信息，请查阅 TrainingArguments、PeftModel 和 SFTTrainer 的文档。
 

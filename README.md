@@ -32,7 +32,8 @@ LLM 学习笔记。
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
 - [优化器](./training/optimizer/README.md)
-- [Llama2 微调](./training/fine_tune/llama2_fine_tune.md)
+- [Llama2 微调](./training/finetune/llama2_fine_tune.md)
+- [Prompt Tuning 和 Prefix Tuning](./)
 
 ## Inference
 - [llama.cpp](./inference/llama.cpp/README.md)
@@ -46,7 +47,7 @@ LLM 学习笔记。
 ## 深度学习编译技术
 
 - [Machine Learning Compilation 课程](./Compilation/machine_learning_compilation.md)
-
+https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/toc01.html
 
 ## 其他
 
