@@ -8,3 +8,4 @@
 
 ## Links
 - [FlagEmbedding](https://github.com/FlagOpen/FlagEmbedding/tree/master)
+- [Adaptive Retrieval w/ Matryoshka Embeddings](https://xenova-adaptive-retrieval-web.static.hf.space/index.html)
