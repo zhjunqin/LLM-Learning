@@ -108,7 +108,8 @@ Soft prompts: https://huggingface.co/docs/peft/conceptual_guides/prompting
 
 https://huggingface.co/docs/peft/main/en/task_guides/clm-prompt-tuning
 
-# 原文
+# 参考资料
 - https://magazine.sebastianraschka.com/p/understanding-parameter-efficient
 - https://magazine.sebastianraschka.com/p/finetuning-large-language-models
 - https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/ch06.html
+- https://zhuanlan.zhihu.com/p/623529964

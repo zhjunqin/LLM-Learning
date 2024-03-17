@@ -44,10 +44,16 @@ LLM 学习笔记。
 ## Profiling
 - [Nsight Systems](./Profiling/nsight_systems.md)
 
-## 深度学习编译技术
+## RAG (Retrieval Augmented Generation)
+
+
+## LLM Agents
+
+
+## 课程
 
 - [Machine Learning Compilation 课程](./Compilation/machine_learning_compilation.md)
-https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/toc01.html
+- [ML.Generative.AI](https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/toc01.html)
 
 ## 其他
 
