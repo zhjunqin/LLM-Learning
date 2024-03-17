@@ -2,6 +2,7 @@
 
 ## parameter-efficient finetuning 的种类
 
+![](./assets/paramter_finetune_types.png)
 
 ## Prompt Tuning
 
@@ -23,6 +24,7 @@
 ```PYTHON
 soft_prompt = torch.nn.Parameter( # Make tensor trainable
     torch.rand(num_tokens, embed_dim)) # Initialize soft prompt tensor
+
 def input_with_soft_prompt(x, soft_prompt) :
     x = concatenate([soft_prompt, x], # Prepend soft prompt to input
                     dim=seq_len)
@@ -30,6 +32,7 @@ def input_with_soft_prompt(x, soft_prompt) :
 
 # train soft prompt tensor via gradient descent
 train(model(input_with_soft_prompt(x)))
+
 # use model with soft prompts
 model(input_with_soft_prompt(x))
 ```
@@ -40,7 +43,7 @@ Soft prompts 与离散文本提示(discrete text prompts)的区别在于，Soft 
 
 ![](./assets/prompt_tuning_compare01.jpg)
 
-上图来自论文的注释图，https://arxiv.org/abs/2104.08691。
+上图来自论文的注释图，https://arxiv.org/abs/2104.08691
 
 另一方面，如上图所示，如果模型具有 110 亿参数，Soft prompts tuning 将与完全微调的性能相匹配（作为参考，最小的 LLaMA 模型有 70 亿参数，最大的 LLaMA 模型有 650 亿参数）。
 
@@ -76,7 +79,7 @@ def transformer_block_with_prefix(x, soft_prompt):
 
 ![](./assets/prefix_tuning_experiment.jpg)
 
-最后，为了阐明在推理过程中使用 soft prompts 的方法：在学习了 soft prompts 之后，当执行我们对模型进行微调的特定任务时，我们必须将其作为前缀提供。这使得模型能够将其结果调整到特定任务。此外，我们可以有多个 soft prompts，每个对应于不同的任务，并在推理过程中提供适当的前缀，以实现特定任务的最佳结果。
+最后，在推理过程中，在学习了 soft prompts 之后，我们必须将其作为前缀提供。这使得模型能够将其结果调整到特定任务。此外，我们可以有多个 soft prompts，每个对应于不同的任务，并在推理过程中提供适当的前缀，以实现特定任务的最佳结果。
 
 
 ## Prefix VS Prompt Tuning
@@ -108,3 +111,4 @@ https://huggingface.co/docs/peft/main/en/task_guides/clm-prompt-tuning
 # 原文
 - https://magazine.sebastianraschka.com/p/understanding-parameter-efficient
 - https://magazine.sebastianraschka.com/p/finetuning-large-language-models
+- https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/ch06.html
