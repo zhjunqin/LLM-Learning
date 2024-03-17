@@ -3,7 +3,6 @@
 
 
 ## Papers
-- [MTEB: Massive Text Embedding Benchmark](https://arxiv.org/pdf/2210.07316.pdf)
 - [Retrieval-Augmented Generation for Large Language Models: A Survey](https://arxiv.org/pdf/2312.10997.pdf)
 
 ## Links

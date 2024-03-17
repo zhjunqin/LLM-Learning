@@ -45,6 +45,7 @@ LLM 学习笔记。
 - [Nsight Systems](./Profiling/nsight_systems.md)
 
 ## RAG (Retrieval Augmented Generation)
+- [Embedding](./RAG/)
 - [RAG](./RAG/README.md)
 
 ## LLM Agents
