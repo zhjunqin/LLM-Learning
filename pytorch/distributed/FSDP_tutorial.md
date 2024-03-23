@@ -419,6 +419,42 @@ def train(args, model, rank, world_size, train_loader, optimizer, epoch, sampler
 
 ```
 
+使用 Tensorboard
+
+```
+def train(args, model, rank, world_size, train_loader, optimizer, epoch, sampler=None):
+    model.train()
+    ddp_loss = torch.zeros(2).to(rank)
+    if sampler:
+        sampler.set_epoch(epoch)
+
+    with profile(
+    activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    profile_memory=True,
+    record_shapes=True,
+    schedule=torch.profiler.schedule(
+        wait=1,
+        warmup=1,
+        active=5),
+    on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/fsdp')
+) as p:
+      for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(rank), target.to(rank)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = F.nll_loss(output, target, reduction='sum')
+        loss.backward()
+        optimizer.step()
+        ddp_loss[0] += loss.item()
+        ddp_loss[1] += len(data)
+        p.step()
+
+    dist.all_reduce(ddp_loss, op=dist.ReduceOp.SUM)
+    if rank == 0:
+        print('Train Epoch: {} \tLoss: {:.6f}'.format(epoch, ddp_loss[0] / ddp_loss[1]))
+
+```
+
 查看训练的一次前向和反向：
 
 ![](./assets/fsdp_profilling_train.jpg)
