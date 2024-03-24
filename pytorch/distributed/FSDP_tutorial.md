@@ -381,6 +381,8 @@ model = FSDP(model,
 对训练增加 profiling
 
 ```
+from torch.profiler import profile, record_function, ProfilerActivity
+
 def train(args, model, rank, world_size, train_loader, optimizer, epoch, sampler=None):
     model.train()
     ddp_loss = torch.zeros(2).to(rank)

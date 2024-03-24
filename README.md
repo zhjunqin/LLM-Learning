@@ -29,6 +29,7 @@ LLM 学习笔记。
 - [Decoding Strategies](./technology/decoding_strategies/README.md)
 
 ## Training
+- [MPI](./training/mpi/README.md)
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
 - [优化器](./training/optimizer/README.md)
