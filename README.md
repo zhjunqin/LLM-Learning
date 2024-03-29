@@ -52,6 +52,9 @@ LLM 学习笔记。
 ## LLM Agents
 
 
+## 开源项目
+- [项目列表](./Opensource/README.md)
+
 ## 课程
 
 - [Machine Learning Compilation 课程](./Compilation/machine_learning_compilation.md)
