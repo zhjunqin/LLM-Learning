@@ -56,9 +56,11 @@ LLM 学习笔记。
 - [项目列表](./Opensource/README.md)
 
 ## 课程
-
 - [Machine Learning Compilation 课程](./Compilation/machine_learning_compilation.md)
 - [ML.Generative.AI](https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/toc01.html)
+- [Intro to Large Language Models](https://www.wisdominanutshell.academy/andrej-karpathy/1hr-talk-intro-to-large-language-models-transcription/)
+- [jalammar.github.io](https://jalammar.github.io/)
+- [Dive into Deep Learning](https://en.d2l.ai/)
 
 ## 其他
 
