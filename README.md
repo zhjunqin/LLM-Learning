@@ -21,7 +21,7 @@ LLM 学习笔记。
 ## 关键技术
 - [FP32/FP16/BF16](./technology/precision/fp32_fp16_bf16.md)
 - Tokenizers
-- Flash Attention
+- [Flash Attention](./technology/flash_attention/README.md)
 - Rotary position embedding
 - KV Cache
 - RMSNorm
@@ -61,6 +61,8 @@ LLM 学习笔记。
 - [Intro to Large Language Models](https://www.wisdominanutshell.academy/andrej-karpathy/1hr-talk-intro-to-large-language-models-transcription/)
 - [jalammar.github.io](https://jalammar.github.io/)
 - [Dive into Deep Learning](https://en.d2l.ai/)
+- [鸢尾花书](https://github.com/Visualize-ML)
+- [llm-course](https://github.com/mlabonne/llm-course?tab=readme-ov-file)
 
 ## 其他
 
