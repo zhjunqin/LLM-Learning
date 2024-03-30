@@ -9,3 +9,4 @@
 - [llm-course](https://github.com/mlabonne/llm-course?tab=readme-ov-file)
 - [nlp-tutorial](https://github.com/graykode/nlp-tutorial)
 - [基于transformers的自然语言处理(NLP)入门](https://github.com/datawhalechina/learn-nlp-with-transformers)
+- [llm-action](https://github.com/liguodongiot/llm-action)
