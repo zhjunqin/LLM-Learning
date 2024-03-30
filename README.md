@@ -49,7 +49,7 @@ LLM 学习笔记。
 - [Nsight Systems](./Profiling/nsight_systems.md)
 
 ## RAG (Retrieval Augmented Generation)
-- [Embedding](./RAG/)
+- [Embedding](./RAG/Embedding.md)
 - [RAG](./RAG/README.md)
 
 ## LLM Agents
@@ -59,14 +59,7 @@ LLM 学习笔记。
 - [项目列表](./Opensource/README.md)
 
 ## 课程
-- [Machine Learning Compilation 课程](./Compilation/machine_learning_compilation.md)
-- [ML.Generative.AI](https://tinnakorn.cs.rmu.ac.th/Courses/Tutorial/ML.Generative.AI.on.AWS/OEBPS/toc01.html)
-- [Intro to Large Language Models](https://www.wisdominanutshell.academy/andrej-karpathy/1hr-talk-intro-to-large-language-models-transcription/)
-- [jalammar.github.io](https://jalammar.github.io/)
-- [Dive into Deep Learning](https://en.d2l.ai/)
-- [鸢尾花书](https://github.com/Visualize-ML)
-- [llm-course](https://github.com/mlabonne/llm-course?tab=readme-ov-file)
+- [学习课程列表](./Courses/README.md)
 
 ## 其他
-
 - [Markdown 数学公式](https://www.cnblogs.com/bytesfly/p/markdown-formula.html)
