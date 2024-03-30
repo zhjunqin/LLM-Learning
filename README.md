@@ -26,7 +26,7 @@ LLM 学习笔记。
 - Tokenizers
 - [Flash Attention](./technology/flash_attention/README.md)
 - Rotary position embedding
-- KV Cache
+- [KV Cache](./technology/KV_Cache/README.md)
 - RMSNorm
 - [Quantization 量化](./technology/Quantization/README.md)
 - [Decoding Strategies](./technology/decoding_strategies/README.md)
