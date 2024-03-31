@@ -47,6 +47,7 @@ LLM 学习笔记。
 
 ## Profiling
 - [Nsight Systems](./Profiling/nsight_systems.md)
+- [Benchmark](./Profiling/benchmark/README.md)
 
 ## RAG (Retrieval Augmented Generation)
 - [Embedding](./RAG/Embedding.md)
