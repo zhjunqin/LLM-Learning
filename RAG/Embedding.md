@@ -10,6 +10,7 @@
 ![](./assets/embedding_2.png)
 
 自从 2010 年左右以来，随着深度学习技术的发展，Embedding 技术得到了广泛的应用和研究。在这个时期，出现了一些重要的 Embedding 算法，例如 Word2Vec、GloVe 和 FastText 等。这些算法可以通过训练神经网络或使用矩阵分解等技术来学习单词的嵌入表示。这些算法被广泛用于各种自然语言处理任务中，例如文本分类、机器翻译、情感分析等。
+
 随着深度学习和自然语言处理技术的快速发展，Embedding 技术得到了进一步的改进和发展。例如，BERT、ELMo 和 GPT 等大型语言模型可以生成上下文相关的 Embedding 表示，这些 Embedding 可以更好地捕捉单词的语义和上下文信息。
 
 ## 为什么需要 Embedding
@@ -35,6 +36,7 @@
 ### One-hot 编码的问题
 
 我们已经进行了 One-hot 编码，并成功地将每个单词表示为一组数字向量。许多自然语言处理项目都这样做，但结果可能不理想，特别是当训练数据集很小的时候。这是因为 One-hot 向量并不是一个很好的输入表示方法。
+
 为什 One-hot 编码的问题不是很理想呢？
 1. 词汇表大小问题：使用这种方法，随着词汇表的增加，特征向量的大小也会增加。One-hot 向量的维度与单词数量相同。如果特征数量爆炸增长，就需要更多的数据来估计足够好的参数以构建一个合理的泛化模型。
 2. 计算问题：每个单词的 Embedding 向量大部分是零，而且许多机器学习模型不能很好地处理非常高维和稀疏的特征。神经网络尤其难以处理这种类型的数据。
@@ -44,6 +46,7 @@ One-hot 向量存在的最重要问题是什么？稠密 Embedding 是如何解�
 **稠密 Embedding 解决的核心问题是泛化问题**
 
 如果我们假设 “cat” 和 “tiger” 这样的单词实际上是相似的，我们希望找到一种方式将这种信息传递给模型。这一点在其中一个单词很少见（例如 “tiger”）的情况下尤其重要，因为它可以借用与类似但更常见的单词相似的计算路径。这是因为在训练过程中，模型学习以一定的方式处理输入“cat”，通过将其通过由权重和偏置参数定义的变换层。当网络最终看到 “tiger” 时，如果它的 Embedding 与 “cat” 相似，那么它将走类似于 “cat” 的路径，而不是网络必须完全从头开始学习如何处理它。如果预测与以前从未见过的事物有关，那么很难做出准确的预测，但如果它与您之前见过的某些东西相关，那么就更容易了。
+
 这意味着 Embedding 向量使我们能够构建更具泛化能力的模型——而不是网络需要费力地学习处理不同的、不相关的输入的许多不同方式，我们反而让相似的单词“共享”参数和计算路径。
 
 ![](./assets/embedding_5.png)
@@ -74,6 +77,7 @@ One-hot 向量存在的最重要问题是什么？稠密 Embedding 是如何解�
 - 电影的时长可以转换成分数，维度为 1，比如 120，
 - 假定所有的电影种类为 10，那么电影的种类可以用一个 One-hot 向量来表示，维度为 10。
 - 电影的评分可以为 0 - 10 之间，维度为 1。
+
 那么一部电影可以用一个向量来表示，总维度为 1012。
 
 这样的向量和上面单词 One-hot 编码有类似的问题。
@@ -108,6 +112,7 @@ Word Embedding 存在一个问题：它只能捕捉单词的静态信息，无�
 ![](./assets/embedding_12.png)
 
 - SIF（Smooth Inverse Frequency）
+
 创建句子表示的一种可能而直接的方式是利用每个 Word Embedding，并根据这些 Embedding 计算整个句子的 Embedding。其中一个算法是 SIF（Smooth Inverse Frequency），它使用每个单词 Embedding 的加权平均，并应用降维技术来获得 Sentence Embedding。
 
 ![](./assets/embedding_13.png)
@@ -138,11 +143,13 @@ Transformer 模型出来后，演化出很多基于 Transformer 的模型，比�
 [YouTube Recommendations](https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf) 中的召回，排序的流程基本是现代推荐系统的标准流程。召回阶段（candidate generation）就是要从推荐的百万级别的视频库中筛选出用户可能感兴趣的视频，把推荐的视频库量级从百万级降到几百个。
 
 ![](./assets/embedding_16.png)
+
 YouTube 的召回模型
 ![](./assets/embedding_17.png)
 ### CV 图像
 
 类比于 Word Embedding 的语义特征，对于 CV 图像，我们期望图像 Embedding 能够表达出图像本身的语义特征。
+
 对于各种 CNN 的模型，就是通过多层的卷积操作在训练过程中捕获图像中存在的特征信息。这些图层将捕获边缘、线条和角等特征，并将它们分组到传递给下一个图层的“桶”中。由于 CNN 的空间不变特性，无论边缘或直线出现在图像的哪个位置，这些特征都将始终映射到相同的桶。这些模型的层变得越来越小，直到一个由多个类别值（比如 ImageNet 有 1000 种）组成的完全连接的层作为输出。
 
 ![](./assets/embedding_18.png)
@@ -180,7 +187,9 @@ OpenAI 的 [text-embedding](https://platform.openai.com/docs/guides/embeddings) 
 - 异常检测：识别与其他文本字符串关联性较低的异常值
 - 多样性度量：分析相似性分布
 - 分类：根据最相似的标签对文本字符串进行分类
+
 两个向量之间的距离衡量它们之间的相关性。较小的距离表示较高的相关性，而较大的距离表示较低的相关性。
+
 OpenAI 在 2024 年 1 月 25 日发布了新的 Embedding 模型，新模型的性能相比较于旧模型有了较大的提升。
 
 ![](./assets/embedding_22.png)
@@ -190,11 +199,13 @@ OpenAI 在 2024 年 1 月 25 日发布了新的 Embedding 模型，新模型的�
 ![](./assets/embedding_23.png)
 
 使用更大维度的 Embedding，将它们存储在向量存储中以便进行检索，通常比使用较小的 Embedding 成本更高，并且消耗更多的计算资源、内存和存储空间。
+
 OpenAI 的两个新 Embedding 模型都使用了一种技术进行训练，该技术允许开发人员在使用 Embedding 时权衡性能和成本。具体而言，开发人员可以通过传递 API 参数来缩短 Embedding 同时具备较好的性能。例如，在 MTEB 基准测试中，一个 text-embedding-3-large Embedding 可以缩短到 256 的大小，但仍然胜过一个大小为 1536 的未缩短的 text-embedding-ada-002 Embedding。
 
 #### [Matryoshka Representation Learning](https://arxiv.org/pdf/2205.13147.pdf)
 
 出发点：人类感知世界是从粗到细粒度，但是模型往往把信息压缩成一个向量。而不同的粒度（维度）的学习可以共享不同的语义空间，比压缩成单独一个向量的方法好。
+
 作者提出了一种 `Matryoshka Representation Learning`（俄罗斯套娃表征学习），在训练时，根据指定维度 `[64,128,...,2048,3072]` 的向量来计算多个 loss。使得用户在推理时，可以根据自己的实际需求，输入维度参数，来得到指定维度的向量。
 
 ![](./assets/embedding_24.png)
@@ -245,31 +256,38 @@ Milvus 是在 2019 年国内公司创建的，其唯一目标是存储、索引�
 
 ### IVF 算法
 IVF(Index Vector Forest) 方法通过将数据集向量分组为簇并将搜索限制在每个查询的一些最近簇来加速向量搜索。
+
 在 IVF-Flat 算法中，只搜索几个簇(而不是整个数据集)是实际的近似值。使用此近似值，可能会错过未搜索的簇的一些近邻，但它极大地缩短了搜索时间。
 
 ![](./assets/embedding_29.png)
 ![](./assets/embedding_30.png)
+
 ### HNSW
 HNSW(Hierarchical Navigable Small World, 分层的可导航小世界) 是一种用于在高维空间中进行高效人工神经网络搜索的数据结构和算法。它是跳表和小世界图（SWG）结构的扩展，可以有效地找到近似的最近邻。
 
 ![](./assets/embedding_31.png)
 ![](./assets/embedding_32.png)
+
 ## Embedding 相似性度量
 
 ### 欧氏距离（L2）
 欧氏距离主要是用来计算连接两点的线段的实际长度。
+
 ![](./assets/embedding_33.png)
 
 ### 内积（IP）
 两个 Embedding 向量间的 IP 距离可按以下方式定义：
+
 ![](./assets/embedding_34.png)
 
 ### 余弦相似度（COSINE）
 余弦相似度是通过计算两组向量之间的夹角余弦来衡量它们的相似度。可以把这两组向量想象为从同一起点（如 [0,0,...]）出发，但朝向不同的线段。
+
 ![](./assets/embedding_35.png)
 
 ### 应该使用哪个函数？
 通常情况下模型训练时使用什么距离函数，推理时也使用什么距离函数。
+
 [OpenAI 推荐余弦相似度](https://platform.openai.com/docs/guides/embeddings/frequently-asked-questions)，而且 Embedding 通常被归一化为长度 1，这意味着：
 - 仅使用内积可以稍微更快地计算余弦相似度
 - 余弦相似度和欧式距离将导致相同的排名
@@ -390,12 +408,10 @@ print(similarity)
 
 
 
-## Papers
+## Links
 - [MTEB: Massive Text Embedding Benchmark](https://arxiv.org/pdf/2210.07316.pdf)
 - [C-Pack: Packaged Resources To Advance General Chinese Embedding](https://arxiv.org/pdf/2309.07597v2.pdf)
 - [Matryoshka Representation Learning 俄罗斯套娃向量表征学习](https://arxiv.org/abs/2205.13147)
-
-## Links
 - [FlagEmbedding](https://github.com/FlagOpen/FlagEmbedding/tree/master)
 - [Adaptive Retrieval w/ Matryoshka Embeddings](https://xenova-adaptive-retrieval-web.static.hf.space/index.html)
 - [Embedding入门介绍以及为什么Embedding在大语言模型中很重要](https://www.datalearner.com/blog/1051683647195362)
