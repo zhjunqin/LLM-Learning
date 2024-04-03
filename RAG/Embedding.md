@@ -309,9 +309,11 @@ HNSW(Hierarchical Navigable Small World, 分层的可导航小世界) 是一种�
 
 ### 图片 Embedding
 
- 使用 ResNet50 的 Average pool 输出的 2048 维，对以下图片做 Embedding
+使用 ResNet50 的 Average pool 输出的 2048 维，[对以下图片做 Embedding](https://github.com/towhee-io/examples/tree/main/image/reverse_image_search)
 
- ```
+
+
+```
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -336,6 +338,62 @@ img = Image.open("image").convert("RGB")
 img_tensor = to_tensor(img).unsqueeze(0).to(device,torch.float)
 feature_out = modelout(img_tensor).flatten() # 2048 维度
 ```
+
+```
+import numpy as np
+import matplotlib.pyplot as plt
+from openTSNE import TSNE
+import os
+
+image_path = "/data/test_images/"
+labels = os.listdir("/data/test_images/") 
+
+data_list = []
+lable_list = []
+
+for lable in labels:
+    path = os.path.join("/data/test_images/", lable)
+    for pic in os.listdir(path):
+        full_path = os.path.join("/data/test_images/", lable, pic)
+        data_list.append(full_path)
+        lable_list.append(lable)
+
+tensor_out = []
+for pic_path in data_list:
+    img = Image.open(pic_path).convert("RGB")
+    img_tensor = to_tensor(img).unsqueeze(0).to(device,torch.float)
+    out = modelout(img_tensor).flatten()
+    x_norm = F.normalize(out, p=2, dim=0).cpu().detach().numpy()
+    tensor_out.append(x_norm)
+
+tsne = TSNE(n_components=2)
+tensor_out_array = np.vstack(tensor_out)
+embedded_data = tsne.fit(tensor_out_array)
+
+data = embedded_data
+
+for label in labels:
+    points = []
+    for i in range(len(lable_list)):
+        if lable_list[i] == label:
+            points.append(i)
+    pp = np.array(points)
+    data2 = data[pp]
+    print(data2.shape)
+    plt.scatter(data2[:,0], data2[:,1], c=plt.cm.Set1(labels.index(label) / 5), label=label)
+
+plt.title('ResNet50 Image Embedding')
+plt.xlabel('x')
+plt.ylabel('y')
+
+# 添加图例
+plt.legend(loc=2)
+
+# 显示图形
+plt.show()
+```
+
+![](./assets/embedding_36.png)
 
 ### 图文 Embedding
 
