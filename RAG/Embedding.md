@@ -100,6 +100,7 @@ Google 在 2013 年提出了 Word2Vec，它的特点是能够将单词转化为�
 ![](./assets/embedding_10.png)
 
 Word2Vec 的训练模型本质上是只具有一个隐含层的神经元网络，它的输入是采用 One-hot 编码的词汇表向量，它的输出也是 One-hot 编码的词汇表向量。使用所有的样本，训练这个神经元网络，等到收敛之后，从输入层到隐含层的那些权重，便是每一个词的词向量。比如，上图中单词的 Word Embedding 便是矩阵 $W_{V \times N}$ 的第 i 行的转置。这样我们就把原本维数为 V 的词向量变成了维数为 N 的词向量（N 远小于 V），并且词向量间保留了一定的相关关系。
+
 ![](./assets/embedding_11.png)
 
 Word Embedding 存在一个问题：它只能捕捉单词的静态信息，无法处理一词多义的情况。后来演进的 ELMo(Embedding from Language Models) 、GTP、BERT 等模型可以基于上下文语义生成动态的 Embedding。
@@ -109,6 +110,7 @@ Word Embedding 存在一个问题：它只能捕捉单词的静态信息，无�
 既然词可以 Embedding，句子也应该可以。近年来许多研究者在研究如何进行句子表示学习，从而获得质量较高的句子向量（Sentence Embedding）。事实上，Sentence Embedding 在信息检索，句子匹配，句子分类等任务上均有广泛应用。
 
 与 Word Embedding 类似，同样语义句子的 Embedding 应该具备相临近的特性。
+
 ![](./assets/embedding_12.png)
 
 - SIF（Smooth Inverse Frequency）
@@ -116,6 +118,7 @@ Word Embedding 存在一个问题：它只能捕捉单词的静态信息，无�
 创建句子表示的一种可能而直接的方式是利用每个 Word Embedding，并根据这些 Embedding 计算整个句子的 Embedding。其中一个算法是 SIF（Smooth Inverse Frequency），它使用每个单词 Embedding 的加权平均，并应用降维技术来获得 Sentence Embedding。
 
 ![](./assets/embedding_13.png)
+
 Transformer 模型出来后，演化出很多基于 Transformer 的模型，比如 BERT，Sentence-Bert 等。
 
 ### 推荐
@@ -129,6 +132,7 @@ Transformer 模型出来后，演化出很多基于 Transformer 的模型，比�
 ```
 296 380 344 588 593 231 595 318 480
 ```
+
 ![](./assets/embedding_14.png)
 
 那么此时电影 ID 是词，电影 ID 序列是句子，一个句子内的词有相互关系，那么就可以根据 Item2vec 计算电影 ID 对应的 Embedding 向量。
@@ -136,6 +140,7 @@ Transformer 模型出来后，演化出很多基于 Transformer 的模型，比�
 生成的 Item Embedding 经过 t-SNE 算法的可视化效果：
 
 ![](./assets/embedding_15.png)
+
 在 Item2Vec 后，涌现出来大量的推荐算法，比如 YouTube Recommendations，双塔模型，Wide&Deep，DCN，MoE 等等。
 
 #### YouTube Recommendations
@@ -145,7 +150,9 @@ Transformer 模型出来后，演化出很多基于 Transformer 的模型，比�
 ![](./assets/embedding_16.png)
 
 YouTube 的召回模型
+
 ![](./assets/embedding_17.png)
+
 ### CV 图像
 
 类比于 Word Embedding 的语义特征，对于 CV 图像，我们期望图像 Embedding 能够表达出图像本身的语义特征。
@@ -161,6 +168,7 @@ YouTube 的召回模型
 #### ResNet
 
 通常可以将 ResNet 中最后的 Average pool 输出的 (比如 ResNet50 的维度为 2048) 向量作为图像的 Embedding。
+
 ![](./assets/embedding_20.png)
 
 也可以使用其他的图像模型抽取特征，比如 EfficientNet， ViT 等。
@@ -239,14 +247,17 @@ Chroma 是一个开源的 Embedding 数据库。Chroma 通过可插拔的知识�
 Pinecone 是一个托管的向量数据库平台，专门应对与高维数据相关的独特挑战。Pinecone 配备了先进的索引和搜索功能，使数据工程师和数据科学家能够构建和实施大规模的机器学习应用。
 
 ![](./assets/embedding_26.png)
+
 ### Faiss
 Faiss 是一个 Facebook AI 团队开源的库，全称为 Facebook AI Similarity Search。
 
 ![](./assets/embedding_27.png)
+
 ### Milvus
 Milvus 是在 2019 年国内公司创建的，其唯一目标是存储、索引和管理由深度神经网络和其他机器学习（ML）模型生成的大规模 Embedding 向量。
 
 ![](./assets/embedding_28.png)
+
 ## Embedding 检索算法
 
 这里介绍几个常见的 Embedding 的检索算法。
@@ -260,12 +271,14 @@ IVF(Index Vector Forest) 方法通过将数据集向量分组为簇并将搜索�
 在 IVF-Flat 算法中，只搜索几个簇(而不是整个数据集)是实际的近似值。使用此近似值，可能会错过未搜索的簇的一些近邻，但它极大地缩短了搜索时间。
 
 ![](./assets/embedding_29.png)
+
 ![](./assets/embedding_30.png)
 
 ### HNSW
 HNSW(Hierarchical Navigable Small World, 分层的可导航小世界) 是一种用于在高维空间中进行高效人工神经网络搜索的数据结构和算法。它是跳表和小世界图（SWG）结构的扩展，可以有效地找到近似的最近邻。
 
 ![](./assets/embedding_31.png)
+
 ![](./assets/embedding_32.png)
 
 ## Embedding 相似性度量
