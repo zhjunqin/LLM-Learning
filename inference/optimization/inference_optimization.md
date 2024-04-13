@@ -142,7 +142,7 @@ X 输入 (batch_size, seq_len, hidden_dim) # hidden_dim = 768
 
 ------
 MHA: 
-P_Q, P_K, P_V = (seq_len, 768), # seq_len, hidden_dim
+P_Q, P_K, P_V = (768, 768), # hidden_dim, hidden_dim
 
 X * P_Q 变成 Q = (batch_size, seq_len, 768)
 X * P_K 变成 K = (batch_size, seq_len, 768)
@@ -154,8 +154,8 @@ K, V: (8, seq_len, 96)
 
 ------
 MQA: 
-P_Q = (seq_len, 768) 
-P_K，P_V = (seq_len, 96)
+P_Q = (768, 768) 
+P_K，P_V = (768, 96) # 只有一个 head
 
 X * P_Q 变成 Q = (batch_size, seq_len, 768)
 X * P_K 变成 K = (batch_size, seq_len, 96)
@@ -167,8 +167,8 @@ K, V：(seq_len, 96)
 
 ------
 GQA（Group = 2）:
-P_Q = (seq_len, 768) 
-P_K，P_V = (seq_len, 2 * 96)
+P_Q = (768, 768) 
+P_K，P_V = (768, 2 * 96) # 2 个 head
 
 把 Q 拆成 8 个 head，K,V 拆成 2 个 Group，4 个 head 共享一个 K，V
 Q： (8, seq_len, 96)
