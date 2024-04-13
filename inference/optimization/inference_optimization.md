@@ -38,7 +38,36 @@
 
 ![](./assets/nv_key-value-caching_.png)
 
+## LLM 的显存要求
 
+实际上，对于 GPU 上的 LLM 显存需求，主要的两个因素是模型权重和 KV 缓存。
+
+- 模型权重：显存被模型参数占用。例如，一个具有 7B 参数的模型（如 Llama2 7B），以 16-bit 精度（FP16 或 BF16）加载，大约需要 `7B * sizeof(FP16) ~= 14GB` 的内存。
+
+- KV 缓存：内存被 self-attention 张量的缓存占用，以避免冗余计算。
+在批处理中，批中每个请求的KV缓存仍然必须单独分配，并且可能占用大量内存。下面的公式描述了适用于大多数常见LLM架构的KV缓存大小。
+
+```
+每个 Token 的 KV 缓存大小（以字节为单位）= 2 * (num_layers) * (num_heads * dim_head) * precision_in_bytes
+```
+
+第一个因子 2 代表 K 和 V 矩阵。通常，(num_heads * dim_head) 的值与 transformer 的 hidden_size（或模型的维度 d_model）相同。这些模型属性通常可以在模型卡或相关的配置文件中找到。
+
+每个输入序列中的每个 Token 都需要这个内存大小，跨输入批次。假设使用半精度，KV 缓存的总大小由以下公式给出。
+
+```
+KV 缓存的总大小（以字节为单位）= (batch_size) * (sequence_length) * 2 * (num_layers) * (hidden_size) * sizeof(FP16)
+```
+
+例如，对于一个使用 16-bit 精度、批大小为 1 的 Llama2 7B 模型，
+
+```
+一个 Token 的 KV 缓存大小：1 * 1 * 2 * 32 * 4096 * 2 = 512KB
+1024 个 Token 的 KV 缓存的大小将为 1 * 1024 * 2 * 32 * 4096 * 2 = 512MB
+4096 个 Token 的 KV 缓存的大小将为 1 * 4096 * 2 * 32 * 4096 * 2 = 2048MB = 2GB。
+```
+
+有效地管理这个 KV 缓存是一项具有挑战性的任务。由于随着批大小和序列长度的线性增长，内存需求可能迅速增加。因此，它限制了可以提供的吞吐量，并对长上下文输入提出了挑战。这是本文中介绍的几项优化的动机。
 
 ## 参考文献
 - [原文：mastering-llm-techniques-inference-optimization](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/)
