@@ -44,6 +44,7 @@ LLM 学习笔记。
 - [vllm](./inference/vllm/README.md)
 - [TRT-LLM](./inference/TRT-LLM/)
 - [MLC-LLM](./inference/MLC-LLM/)
+- [推理优化](./inference/optimization/README.md)
 
 ## Profiling
 - [Nsight Systems](./Profiling/nsight_systems.md)
