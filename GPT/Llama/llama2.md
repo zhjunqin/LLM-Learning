@@ -4,7 +4,7 @@
 
 ## LLaMA
 
-LLaMA (Large Language Model Meta AI) 是 Meta 于 2023 年 2 月发布的大语言模型。2023 年 7 月，Meta 推出了 LLaMA2, repo: https://github.com/facebookresearch/llama。基于 LLaMA 衍生出了大量的下游模型。
+LLaMA (Large Language Model Meta AI) 是 Meta 于 2023 年 2 月发布的大语言模型。2023 年 7 月，Meta 推出了 LLaMA2, [repo](https://github.com/facebookresearch/llama)。基于 LLaMA 衍生出了大量的下游模型。
 
 ![](./assets/llama_models.png)
 
@@ -84,6 +84,7 @@ LlamaForTextGeneration(
 #### 绝对位置编码
 - Sinusoidal 位置编码是在原 Transformer 模型中使用的一种显式编码
 - 其中 $p_{k, 2i}$ 和 $p_{k, 2i+1}$ 分别是位置索引第 $k$ 个向量中的第 $2i$ 和 $2i+1$ 个分量。
+
 ![](./assets/Sinusoidal_output1.png)
 
 - 一个长度为 32 的输入序列（每个输入向量的特征维度是 128 ）的 Sinusoidal 编码的可视化如下：
@@ -93,8 +94,9 @@ LlamaForTextGeneration(
 #### RoPE
 - 旋转位置编码（Rotary Position Embedding，RoPE）是论文 [Roformer: Enhanced Transformer With Rotray Position Embedding](https://arxiv.org/pdf/2104.09864.pdf) 提出的一种能够将相对位置信息依赖集成到 self-attention 中，并提升 transformer 架构性能的位置编码方式。
 - RoPE 具有更好的外推性，目前是大模型相对位置编码中应用最广的方式之一。
-- 外推性是指大模型在训练时和预测时的输入长度不一致，导致模型的泛化能力下降的问题。例如，如果一个模型在训练时只使用了 512 个 token 的文本，那么在预测时如果输入超过 512 个 token，模型可能无法正确处理。这就限制了大模型在处理长文本或多轮对话等任务时的效果。
+- **外推性**是指大模型在训练时和预测时的输入长度不一致，导致模型的泛化能力下降的问题。例如，如果一个模型在训练时只使用了 512 个 token 的文本，那么在预测时如果输入超过 512 个 token，模型可能无法正确处理。这就限制了大模型在处理长文本或多轮对话等任务时的效果。
 - 论文中提出为了能利用上 token 之间的相对位置信息，假定 query 向量 $q_m$ 和 key 向量 $k_n$ 之间的内积操作可以被一个函数 $g$ 表示，该函数 $g$ 的输入是词嵌入向量 $x_m$,$x_n$ 和它们之间的相对位置$m-n$ 如下, 接下来的目标就是找到一个等价的位置编码方式，从而使得上述关系成立。
+
 ![](./assets/llama_rope_output1.png)
 
 - 论文中论证通过向量旋转的方式得到目标函数如下：
@@ -104,7 +106,7 @@ LlamaForTextGeneration(
 ![](./assets/llama_rope_output3.png)
 
 #### ALiBi
-- ALiBi 由论文 Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation 提出。
+- ALiBi 由论文 [Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation](https://arxiv.org/abs/2108.12409) 提出。
 - 为了有效地实现外推，作者引入了一种称为"注意力线性偏置 (ALiBi)"的方法。ALiBi 根据 token 之间的距离给 attention score 加上一个预设好的偏置矩阵，比如 $q$ 和 $k$ 相对位置差 1 就加上一个 -1 的偏置，两个 token 距离越远这个负数就越大，代表他们的相互贡献越低。由于注意力机制一般会有多个 head，这里针对每一个 head 会乘上一个预设好的斜率项(Slope)。
 - 举个例子，原来的注意力矩阵为 $A$，叠加了 ALiBi 后为 $A + mB$ 如下所示：
 
@@ -147,7 +149,7 @@ LlamaForTextGeneration(
 
 ![](./assets/llama_activation_output3.png)
 
-- 论文 GLU Variants Improve Transformer 研究了 GLU 的变体对 Transformer 模型性能的影响。
+- 论文 [GLU Variants Improve Transformer](https://arxiv.org/pdf/2002.05202v1.pdf) 研究了 GLU 的变体对 Transformer 模型性能的影响。
 
 ![](./assets/llama_activation_output4.png)
 
@@ -189,11 +191,12 @@ LlamaForTextGeneration(
 - Softmax 函数分块计算：
   - 假定有一个向量 $x = [x_1, x_2, ..., x_B]$，那么 $softmax(x)$ 等价于如下公式：
     - 先取 $x$ 的最大值，然后每一个 $x_i$ 都减去 $m(x)$，然后计算 $e^{{x_i}- m(x)}$，最后得到和原始的 $softmax(x)$ 等价
-  ![](./assets/llama_flash_att_output4.png)
+![](./assets/llama_flash_att_output4.png)
   - 这时如果有一个向量 $x = [x^{(1)}, x^{(2)}]$，是两个向量的合并，那么 $softmax(x)$ 等价于如下公式：
-  ![](./assets/llama_flash_att_output5.png)
+![](./assets/llama_flash_att_output5.png)
 
 - Flash Attention 算法
+
 ![](./assets/llama_flash_att_output6.png)
 
 #### GQA
@@ -223,3 +226,21 @@ LlamaForTextGeneration(
 - Adam 和 AdamW 的对比
 
 ![](./assets/llama_adamw_output2.png)
+
+
+## 参考文献
+
+- https://cameronrwolfe.substack.com/p/language-models-gpt-and-gpt-2#%C2%A7decoder-only-transformers
+- https://cameronrwolfe.substack.com/p/llama-2-from-the-ground-up
+- https://zhuanlan.zhihu.com/p/667042779
+- https://wikidocs.net/167226
+- https://zhuanlan.zhihu.com/p/636784644
+- https://www.jiqizhixin.com/articles/2018-07-03-14
+- https://cloud.tencent.com/developer/article/2336073
+- https://www.51cto.com/article/764335.html
+- https://blog.csdn.net/qq_41185868/article/details/131692975
+- https://juejin.cn/post/7287768247889559611
+- https://zhuanlan.zhihu.com/p/640223710
+- https://0809zheng.github.io/2022/07/01/posencode.html
+- https://0809zheng.github.io/2022/07/06/roformer.html
+- https://hub.baai.ac.cn/view/29979
