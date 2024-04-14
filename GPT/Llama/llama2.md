@@ -191,8 +191,10 @@ LlamaForTextGeneration(
 - Softmax 函数分块计算：
   - 假定有一个向量 $x = [x_1, x_2, ..., x_B]$，那么 $softmax(x)$ 等价于如下公式：
     - 先取 $x$ 的最大值，然后每一个 $x_i$ 都减去 $m(x)$，然后计算 $e^{{x_i}- m(x)}$，最后得到和原始的 $softmax(x)$ 等价
-![](./assets/llama_flash_att_output4.png)
   - 这时如果有一个向量 $x = [x^{(1)}, x^{(2)}]$，是两个向量的合并，那么 $softmax(x)$ 等价于如下公式：
+
+![](./assets/llama_flash_att_output4.png)
+
 ![](./assets/llama_flash_att_output5.png)
 
 - Flash Attention 算法
