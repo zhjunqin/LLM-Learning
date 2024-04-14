@@ -1,6 +1,6 @@
 # Llama & Llama2
 
-本文介绍 Llama & Llama2 的演进，其中关键的技术。
+本文介绍 Llama & Llama2 的模型中的关键的技术。
 
 ## LLaMA
 
