@@ -17,6 +17,7 @@ LLM 学习笔记。
 - [MiniGPT-4](./GPT/miniGPT4/README.md)
 - [TinyLlama](./GPT/TinyLlama/README.md)
 - [LLAMA](./GPT/Llama/README.md)
+- [ChatML](./GPT/chatml.md)
 
 ## 多模态
 - [LLAVA](./Multimodal/LLAVA.md)
