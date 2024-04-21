@@ -2,6 +2,8 @@
 
 这里介绍 集合通信 Collective Operations。
 
+[mpi4py 代码参考](./mpi4py.md)
+
 ## Overview
 
 Overview of collective operations. 
@@ -96,8 +98,10 @@ ReduceScatter 操作执行与 Reduce 相同的操作，但结果以相等大小�
 
 ![](./assets/ring_allreduce_08.png)
 
+
 ## 参考文献
 - https://jcst.ict.ac.cn/en/supplement/f82ea167-0ca9-46dc-9109-28b6ca0cf983
 - https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html
 - https://en.wikipedia.org/wiki/Collective_operation
 - https://blog.csdn.net/greatcoder/article/details/125973196
+- [集体通信（Collective Communication）算法入门：从 AllGather 到 AllReduce](https://bohrium.dp.tech/notebooks/1447)

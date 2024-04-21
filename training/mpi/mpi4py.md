@@ -252,6 +252,8 @@ Alltoall 集体通讯结合了 scatter 和 gather 的功能。在 mpi4py 中，�
 - comm.Alltoallv(sendbuf, recvbuf) :
 - comm.Alltoallw(sendbuf, recvbuf) :
 
+Alltoall 只能散发长度相同的数据量，而 Alltoallv 则可散发不同长度的数据量，Alltoallw 是对 Alltoallv 的进一步扩展，不仅可以发送不同长度的数据，还可以发送不同类型的数据。
+
 在下面的例子中，我们将看到 mpi4py 是如何实现 comm.Alltoall 的。我们定义了进程的通讯者组，进程可以在组中接收或发送数据，格式为数字数据的数组。
 
 ```
@@ -309,3 +311,4 @@ comm.alltoall 方法将 task j 的中 sendbuf 的第 i 个对象拷贝到 task i
 - https://www.jianshu.com/p/f497f3a5855f
 - https://zhuanlan.zhihu.com/p/25332041
 - https://muyuuuu.github.io/2021/02/23/MPI-basics/
+- https://www.jianshu.com/p/d2e0b977328d
