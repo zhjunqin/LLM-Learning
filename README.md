@@ -33,8 +33,9 @@ LLM 学习笔记。
 - [Decoding Strategies](./technology/decoding_strategies/README.md)
 
 ## Training
+- [前向和反向传播](./training/backprob/README.md)
 - [MPI](./training/mpi/README.md)
-- [分布式训练并行化]
+- [分布式训练并行化](./training/parallelism/README.md)
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
 - [优化器](./training/optimizer/README.md)
