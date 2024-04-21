@@ -26,7 +26,7 @@ QKV 张量被输入到注意力块，这是 Transformer 模型的核心组件。
 
 ## 系统设计
 
-与已知的 Transformer 架构类似，该设计包括将输入序列 N 划分到 P 个可用设备上。每个本地的 N/P 划分被投影为查询（Q）、键（K）和值（V）embeddings。接下来，通过参与计算设备之间高度优化的 all-to-all 集合操作，将 (QKV) embeddings 收集到全局 QKV 中。在 all-to-all 集合之后，按头部计算注意力，形式如下：
+与已知的 Transformer 架构类似，该设计包括将输入序列 N 划分到 P 个可用设备上。每个本地的 N/P 划分被投影为查询（Q）、键（K）和值（V）embeddings。接下来，通过参与计算设备之间高度优化的 all-to-all 集合操作，将 (QKV) embeddings 收集到全局 QKV 中。在 all-to-all 集合之后，按 head 计算注意力，形式如下：
 
 $$ Outputcontext = Softmax( (QK^T)/ \sqrt{d} ) V $$
 
@@ -34,8 +34,19 @@ $$ Outputcontext = Softmax( (QK^T)/ \sqrt{d} ) V $$
 
 ![](./assets/deepspeed_ulysses_02.png)
 
+DeepSpeed- Ulysses 的核心在于切分 Q、K、V 后进行的 All-to-All 通信方式，这个通信方式同 Allreduce 一样，是分布式训练中的 Collective functions，All-to-All 在每个进程向每个其他进程发消息的一部分，最后处理器拥有各个进程消息的一部分。他的作用相当于分布式转置  Transpose 操作。
+
+![](./assets/deepspeed_ulysses_04.jpg)
+
+缺点：Ulysses也有明显缺点，就是转置后切分维度 d/P，我们希望 d/P=hc/P * head_size，即对 head_cnt 所在维度切分，这样 Attention 的计算都在一张卡上完成，从而可以使用 FlashAttention 等单卡优化。但是如果遇到 GQA 或者 MQA 情况，K、V 的 head_cnt 很小，导致 GPU 数目 P 也不能变得很大。
+
+
 ## 评估
 
 第一组实验是在 1.2B 参数的 GPT 模型上对序列长度进行强扩展，最多达到 100 万个 Token。DeepSpeed 序列并行性允许随着 GPU 数量的增加线性增加序列长度，并且序列长度与 GPU 数量相对线性缩放，并在适当的 GPU 数量下保持类似的计算吞吐量。
 
 ![](./assets/deepspeed_ulysses_03.png)
+
+## 参考文献
+- https://juejin.cn/post/7357917500963258378
+- https://zhuanlan.zhihu.com/p/689067888

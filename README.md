@@ -34,11 +34,12 @@ LLM 学习笔记。
 
 ## Training
 - [MPI](./training/mpi/README.md)
+- [分布式训练并行化]
 - [DeepSpeed](./DeepSpeed/README.md)
 - [混合精度训练](./training/amp/README.md)
 - [优化器](./training/optimizer/README.md)
 - [Llama2 微调](./training/finetune/llama2_fine_tune.md)
-- [Prompt Tuning 和 Prefix Tuning](./)
+- Prompt Tuning 和 Prefix Tuning
 
 ## Inference
 - [llama.cpp](./inference/llama.cpp/README.md)
