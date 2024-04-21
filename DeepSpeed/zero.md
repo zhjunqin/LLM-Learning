@@ -69,9 +69,70 @@ ZeRO 消除了内存冗余，并使整个集群的全部聚合内存容量可用
 
 - 其中包括 FP16 的参数和梯度，FP32 的参数，梯度和优化器状态（这里和 paper 中的描述对不上，增加了梯度的 FP32 值，这样 $K$ 变成了 16）
 
-
-
 ![](./assets/zero_13.png)
+
+![](./assets/zero_14.png)
+
+- 开始训练过程
+
+每个 GPU 负责整个模型中的一部分，同时使用 4 路数据并行的 ZeRO3。
+
+![](./assets/zero_15.png)
+
+一个 batch 的训练过程。
+
+![](./assets/zero_16.png)
+
+GPU0 初始化了 M0 部分的参数，然后广播给 GPU1,2,3。
+
+![](./assets/zero_17.png)
+
+每个 GPU 都有了 M0 阶段的参数，然后用各自的数据进行前向计算。
+
+![](./assets/zero_18.png)
+
+一旦 M0 阶段前向计算完成，GPU1,2,3 就可以删除 M0 阶段的参数。
+
+![](./assets/zero_19.png)
+
+同样类似，完成 M1，M2，M3 阶段的前向计算。
+
+![](./assets/zero_20.png)
+
+![](./assets/zero_21.png)
+
+![](./assets/zero_22.png)
+
+- 前向阶段完成后，每个 GPU 基于各自的数据计算 Loss。
+
+![](./assets/zero_23.png)
+
+- 开始反向传播，从 M3 开始计算。
+
+![](./assets/zero_24.png)
+
+GPU0,1,2 把它们的 M3 梯度传给 GPU3，GPU3 进行梯度累加计算，然后更新自己保存的 fp16 梯度。
+
+![](./assets/zero_25.png)
+
+GPU0,1,2 可以删掉它们保存的临时 M3 的梯度和参数。
+
+![](./assets/zero_26.png)
+
+- 更新优化器状态和参数。
+
+从最新的梯度计算出 fp32 的一阶和二阶动量，然后更新 fp32 的模型参数，然后转换成 fp16。
+
+![](./assets/zero_27.png)
+
+更新到各自的参数中。
+
+![](./assets/zero_28.png)
+
+至此完成一次 batch 的前向和反向计算过程。
+
+![](./assets/zero_29.png)
+
 
 ## 参考文献
 - https://www.microsoft.com/en-us/research/blog/zero-deepspeed-new-system-optimizations-enable-training-models-with-over-100-billion-parameters/
