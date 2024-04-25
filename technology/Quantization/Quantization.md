@@ -19,7 +19,7 @@
 在本节中，我们将实施两种量化技术：一种是 absolute maximum（absmax）量化的对称量化方法，另一种是 zero-point 量化的非对称量化方法。在这两种情况下，目标是将 FP32 张量 $X$ (原始权重）映射到 INT8 张量 $X_{quant}$（量化权重）。
 
 ### absmax quantization
-使用 absmax 量化，原始数值被除以张量的绝对最大值，并乘以一个缩放因子（127），将输入映射到范围 [-127, 127]。为了恢复原始的 FP16 值，INT8 数值除以量化因子，但是四舍五入会导致一定的精度损失。
+使用 absmax 量化（也被称之为对称量化）原始数值被除以张量的绝对最大值，并乘以一个缩放因子（127），将输入映射到范围 [-127, 127]。为了恢复原始的 FP16 值，INT8 数值除以量化因子，但是四舍五入会导致一定的精度损失。
 
 $$
 X_{\rm quant} = \rm round \left( \frac{127}{\rm max{|X|}} \cdot X \right) 
@@ -31,6 +31,27 @@ $$
 例如，假定有一个绝对最大值为 3.2。权重为 0.1 将被量化为 $\rm round \left( \frac{127}{\rm 3.2} \times 0.1 \right) = \rm round (3.96875) = 4 $。
 
 如果想要将其反量化，我们将得到 $\frac{3.2}{127} \times 4 = 0.1008 $，这意味着一个误差为 0.008。
+
+
+#### 直观的理解
+
+这里用直观的理解一下对称量化。
+
+$$
+X_{\rm quant} = \rm round \left( \frac{127}{\rm max{|X|}} \cdot X \right)  = \rm round \left( X / \frac{\rm max{|X|}}{127} \right) 
+$$
+
+将 $\rm max{|X|}$ 等分成 $127$ 份，也就是每个整数间隔等价于一份。然后将 $X$ 除以等分的份，看看 $X$ 占了几份。
+
+反量化同理。
+
+$$
+X_{\rm dequant} = \frac{\rm max{|X|}}{127} \cdot X_{\rm quant}
+$$
+
+$\rm max{|X|}$ 被等分成 $127$ 份，那么整数 $X_{\rm dequant}$ 所占的份数还原回浮点数后等价于多少。
+
+#### Python 实现
 
 下面是相应的 Python 实现：
 
@@ -76,7 +97,24 @@ $$
 
 ![](./assets/naive_quantization.png)
 
-Python 的实现如下：
+#### 直观的理解
+
+这里同样直观的理解一下非对称量化。
+
+$$
+\rm scale =  \frac{255}{\rm max(X) - \rm min(X)} = 1 / \frac{\rm max(X) - \rm min(X)}{255}
+$$
+
+最大数减去最小数，也就是整个 $X$ 的范围被等分成了 255 份。
+
+$$
+X_{\rm quant} = \rm round \left( \rm scale \cdot X + zeropoint \right) 
+$$
+
+将 $X$ 除以等分的份数，看映射成几份，然后加上零点的偏移。
+
+
+#### Python 的实现
 
 ```
 def zeropoint_quantize(X):

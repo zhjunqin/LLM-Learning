@@ -4,7 +4,7 @@ https://github.com/microsoft/DeepSpeed
 
 ## Zero Redundancy Optimizer
 
-参见 [Zero 详细介绍](./zero.md)。
+参见 [ZeRO 详细介绍](./zero.md)。
 
 ![](./assets/zero_02.png)
 
