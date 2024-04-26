@@ -1,4 +1,202 @@
-# AUTOGRAD
+# 自动微分 (AUTOGRAD)
 
-https://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html
+原文：https://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html
 
+torch.autograd 是 PyTorch 的自动微分引擎，用于支持神经网络训练。
+
+## 背景
+
+神经网络（Neural networks）是一组嵌套函数，对一些输入数据进行执行。这些函数由参数定义（包括权重和偏置），在 PyTorch 中以张量的形式存储。
+
+神经网络的训练分为两个步骤：
+
+- 前向传播：在前向传播中，神经网络对样本的标注进行预测。它通过将输入数据通过每个函数来进行运算，从而进行这种猜测。
+
+- 反向传播：在反向传播中，神经网络根据其预测的误差调整其参数。它通过从输出处向后遍历，收集与函数参数相关的误差导数（梯度），并使用梯度下降优化参数。
+
+## Pytorch 中的使用
+
+让我们来看一个单独的训练步骤。在这个例子中，我们从 torchvision 加载一个预训练的 resnet18 模型。我们创建一个随机数据张量来表示一个具有 3 个通道、高度和宽度为 64 的单个图像，以及其相应的标签初始化为一些随机值。预训练模型中的标签形状为（1,1000）。
+
+```
+import torch
+from torchvision.models import resnet18, ResNet18_Weights
+model = resnet18(weights=ResNet18_Weights.DEFAULT)
+data = torch.rand(1, 3, 64, 64)
+labels = torch.rand(1, 1000)
+```
+
+接下来，我们将输入数据通过模型的每一层进行运算，以进行预测。这是前向传递的过程。
+
+我们使用模型的预测结果和相应的样本标注来计算误差（loss）。接下来的步骤是通过网络进行误差的反向传播。当我们在误差张量上调用 `.backward()` 时，反向传播过程开始。然后，Autograd 会计算并存储每个模型参数的梯度，存储在参数的 `.grad` 属性中。
+
+```
+loss = (prediction - labels).sum()
+loss.backward() # backward pass
+```
+
+接下来，我们加载一个优化器，这里使用的是学习率为 0.01、动量为 0.9 的 SGD 优化器。我们在优化器中注册模型的所有参数。
+
+```
+optim = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
+```
+
+最后，我们调用 `.step()` 来启动梯度下降。优化器根据存储在 `.grad` 中的梯度来调整每个参数。
+
+```
+optim.step() #gradient descent
+```
+
+至此完成了一次前向和反向传播过程，完整的代码：
+
+```
+import torch
+from torchvision.models import resnet18, ResNet18_Weights
+
+data = torch.rand(1, 3, 64, 64)
+labels = torch.rand(1, 1000)
+
+model = resnet18(weights=ResNet18_Weights.DEFAULT)
+
+# 初始化优化器时，告诉优化器应该更新模型的哪些参数（张量）
+optim = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
+
+prediction = model(data) # forward pass
+
+loss = (prediction - labels).sum()
+
+# pytorch 中 backward（）函数的计算，当进行反向传播时，梯度是累加起来而不是被替换，但在处理每一个 batch 时，如不需要与其他 batch 的梯度累加，需要对每个 batch 调用一遍 zero_grad（）将参数梯度置 0.
+# 如果不是处理每个 batch 清除一次梯度，而是两次或多次再清除一次，也就是进行了梯度累加，相当于提高了 batch_size
+optim.zero_grad()
+
+# 根据计算图，反向传播，通过链式法则，计算每个一参数的梯度
+# 梯度就会被张量本身“存储”起来（它们具有 grad 和 requires_grad 属性）
+loss.backward() # backward pass
+
+# 优化器遍历它应该更新的所有参数（张量），并使用它们内部存储的 grad 来更新它们的值
+# 不同的优化器有不同的策略
+# 单纯的 SGD 计算 w = w - lr * grad
+# Adam 会计算梯度一阶和二阶动量，然后再计算更新 w
+optim.step() # gradient descent
+
+```
+
+## 自动微分中的求导过程 (Differentiation in Autograd)
+
+让我们来看看 `autograd` 如何收集梯度。我们创建了两个张量 $a$ 和 $b$，并设置 `requires_grad=True`。这告诉 `autograd` 需要跟踪对它们的每个操作。
+
+```
+import torch
+
+a = torch.tensor([2., 3.], requires_grad=True)
+b = torch.tensor([6., 4.], requires_grad=True)
+```
+
+我们创建另一个张量 $Q = 3 a^3 - b^2$ 。
+
+```
+Q = 3*a**3 - b**2
+```
+
+假设 $a$ 和 $b$ 是神经网络的参数，$Q$ 是误差。在神经网络训练中，我们希望计算误差相对于参数的梯度，即：
+
+$$  \frac{\partial Q}{\partial a} = 9 a^2 $$
+
+$$  \frac{\partial Q}{\partial b} = -2 b $$
+
+当我们在 $Q$ 上调用 `.backward()` 时，`autograd` 会计算这些梯度，并将它们存储在相应张量的 `.grad` 属性中。
+
+我们需要在 `Q.backward()` 中明确传递一个梯度参数，因为它是一个向量。`gradient` 是一个与 `Q` 形状相同的张量，它表示 `Q` 相对于自身的梯度，即：
+
+$$  \frac{\partial Q}{\partial Q} = 1 $$
+
+同样地，我们也可以将 $Q$ 聚合成一个标量，并隐式地调用 `backward`，例如 `Q.sum().backward()`。
+
+```
+external_grad = torch.tensor([1., 1.])
+Q.backward(gradient=external_grad)
+```
+
+梯度现在存储在 `a.grad` 和 `b.grad` 中。
+
+```
+# check if collected gradients are correct
+print(9*a**2 == a.grad)
+print(-2*b == b.grad)
+
+# 输出
+# tensor([True, True])
+# tensor([True, True])
+
+```
+
+完整代码：
+
+```
+import torch
+
+a = torch.tensor([2., 3.], requires_grad=True)
+b = torch.tensor([6., 4.], requires_grad=True)
+
+Q = 3*a**3 - b**2
+
+external_grad = torch.tensor([1., 1.])
+Q.backward(gradient=external_grad)
+
+print(9*a**2 == a.grad)
+print(-2*b == b.grad)
+
+```
+
+```
+>>> a.grad
+tensor([36., 81.])
+>>> b.grad
+tensor([-12.,  -8.])
+
+```
+
+## 使用 autograd 进行向量微积分（Vector Calculus）
+
+假如你有一个向量函数 $ \vec{y} = f(\vec{x})$，其中 $\vec{y}$ 和 $\vec{x}$ 均为向量。$\vec{y}$ 的维度为 $m$，$\vec{x}$ 的维度为 $n$。
+
+那么向量 $\vec{y}$ 相对于向量 $\vec{x}$ 的梯度是一个雅可比矩阵 $J$。
+
+$$
+J = \left[ \frac{\partial \vec{y}}{\partial x_1} {\cdots} \frac{\partial \vec{y}}{\partial x_n}  \right] = \begin{bmatrix}
+{\frac{\partial y_1}{\partial x_1}}&{\cdots}&{\frac{\partial y_1}{\partial x_n}}\\
+{\vdots}&{\ddots}&{\vdots}\\
+{\frac{\partial y_m}{\partial x_1}}&{\cdots}&{\frac{\partial y_m}{\partial x_n}}\\
+\end{bmatrix}
+$$
+
+一般来说，`torch.autograd` 就是用于计算向量雅可比积 (vector-Jacobian product) 的引擎。
+
+也就是给定任何向量 $\vec{v}$，计算积 $ J^T \cdot \vec{v}$。
+
+如果 $\vec{v}$ 是标量函数 $l = g(\vec{y})$ 的梯度，也就是
+
+$$ \vec{v} = \left[ \frac{\partial l}{\partial y_1} {\cdots} \frac{\partial l}{\partial y_m}  \right]^T_{m \times 1} $$
+
+那么根据链式法则，向量雅可比积将是 $l$ 相对于 $\vec{x}$ 的梯度：
+
+$$
+J^T \cdot \vec{v} = \begin{bmatrix}
+{\frac{\partial y_1}{\partial x_1}}&{\cdots}&{\frac{\partial y_m}{\partial x_1}}\\
+{\vdots}&{\ddots}&{\vdots}\\
+{\frac{\partial y_1}{\partial x_n}}&{\cdots}&{\frac{\partial y_m}{\partial x_n}}\\ 
+\end{bmatrix}_{n \times m}
+\left[ \frac{\partial l}{\partial y_1} {\cdots} \frac{\partial l}{\partial y_m}  \right]^T_{m \times 1}
+$$
+
+在上面的例子中，我们使用的就是向量雅可比积的这个特性；`external_grad` 表示 $\vec{v}$。
+
+
+## 计算图 (Computational Graph)
+
+## 在有向无环图（DAG）中的排除
+
+
+
+## 参考文献
+- https://stackoverflow.com/questions/53975717/pytorch-connection-between-loss-backward-and-optimizer-step
