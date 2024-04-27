@@ -281,7 +281,236 @@ optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
 
 相同的排除功能也可以通过 `torch.no_grad()` 作为上下文管理器来使用。
 
+## torch.Tensor.backward
 
+再来看 `Tensor.backward` 函数。
+```
+Tensor.backward(gradient=None, retain_graph=None, create_graph=False, inputs=None)[source]
+
+
+Computes the gradient of current tensor wrt graph leaves.
+计算当前张量相对于图中叶子节点的梯度。
+
+The graph is differentiated using the chain rule. If the tensor is non-scalar (i.e. its data has more than one element) and requires gradient, the function additionally requires specifying gradient. It should be a tensor of matching type and location, that contains the gradient of the differentiated function w.r.t. self.
+使用链式法则对图进行微分。如果张量是非标量（即其数据具有多个元素）且需要梯度，则该函数还需要指定梯度。梯度应为匹配类型和位置的张量，其中包含相对于自身的微分函数的梯度。
+
+This function accumulates gradients in the leaves - you might need to zero .grad attributes or set them to None before calling it. See Default gradient layouts for details on the memory layout of accumulated gradients.
+该函数在叶子节点中累积梯度-在调用之前，您可能需要将 .grad 属性归零或设置为None。有关累积梯度的内存布局的详细信息，请参阅默认梯度布局。
+```
+
+这个函数传入的 `gradient` 就是该 Tensor 反向传播时的梯度。`gradient` 的形状与该 Tensor 相同。
+
+假定该 Tensor 为 $Y$， $Y = f(X)$，其中 $Y$ 和 $X$ 都是 Tensor。
+
+那么损失函数假定为 $l = g(Y)$。那么 $Y$ 的梯度就是 $ \frac{\partial l}{\partial Y} $。
+
+那么根据链式法则：
+
+$$ \frac{\partial l}{\partial X}  = \frac{\partial l}{\partial Y} \cdot  \frac{\partial Y}{\partial X} $$
+
+这里的 `gradient` 就是 $Y$ 相对于 $l$ 的梯度，也就是 $\frac{\partial l}{\partial Y}$，来为链式法则中后续计算叶子节点 $X$ 的梯度。
+
+如果 Tensor 是标量，那么当前 Tensor 可以理解为就是 loss。示例：
+
+```
+import torch
+
+x1 = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+x2 = torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
+x3 = torch.tensor([7.0, 8.0, 9.0], requires_grad=True)
+y1 = x1 * x2 
+y2 = y1 + x3
+z = torch.sum(y2)
+z.backward()
+print(x1.grad) # tensor([4., 5., 6.])
+print(x2.grad) # tensor([1., 2., 3.])
+print(x3.grad) # tensor([1., 1., 1.])
+
+```
+
+```
+>>> y1.grad # None
+>>> y2.grad
+>>> y1.grad_fn
+<MulBackward0 object at 0x7fb5d5f73610>
+>>> y2.grad_fn
+<AddBackward0 object at 0x7fb5d5f73e80>
+>>> y1.requires_grad
+True
+
+>>> x1.grad
+tensor([4., 5., 6.])
+>>> x1.grad_fn
+```
+如果不是标量，那么就需要传参数 `gradient`
+```
+import torch
+
+x1 = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+x2 = torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
+x3 = torch.tensor([7.0, 8.0, 9.0], requires_grad=True)
+y1 = x1 * x2 
+y2 = y1 + x3
+
+# 这里不使用 z = torch.sum(y2)，直接用梯度
+# 此时 external_grad 就是 y2 相对于 z 的梯度
+external_grad = torch.tensor([1., 1., 1.0])
+y2.backward(external_grad)
+
+print(x1.grad) # tensor([4., 5., 6.])
+print(x2.grad) # tensor([1., 2., 3.])
+print(x3.grad) # tensor([1., 1., 1.])
+
+```
+
+`.requires_grad_(...)` 可以在原地更改现有张量的 `requires_grad` 标志。如果未提供输入标志，默认为 True。
+```
+>>> a = torch.randn(2, 2)
+>>> a = ((a * 3) / (a - 1))
+>>> print(a.requires_grad)
+False
+>>> a.requires_grad_(True)
+tensor([[-8.7206,  9.5911],
+        [-3.2956, -3.0361]], requires_grad=True)
+>>> print(a.requires_grad)
+True
+>>> b = (a * a).sum()
+>>> print(b.grad_fn)
+<SumBackward0 object at 0x7fb5d5f73400>
+
+```
+
+
+
+```
+import torch
+
+>>> x = torch.ones(2, 2, requires_grad=True)
+>>> print(x.data)
+tensor([[1., 1.],
+        [1., 1.]])
+>>> print(x.grad)
+None
+>>> print(x.grad_fn)
+None
+>>>
+>>> y = x + 2
+>>> print(y)
+tensor([[3., 3.],
+        [3., 3.]], grad_fn=<AddBackward0>)
+>>> print(y.grad_fn)
+<AddBackward0 object at 0x7fb5d5f73e80>
+>>>
+>>> z = y * y * 3
+>>> out = z.mean()
+>>> print(z, out)
+tensor([[27., 27.],
+        [27., 27.]], grad_fn=<MulBackward0>) tensor(27., grad_fn=<MeanBackward0>)
+
+```
+
+## 一个简单的 MLP 示例
+
+```
+import torch
+import torch.autograd as autograd
+
+x = torch.randn((5, 3), requires_grad=False)
+y = torch.randn(5, requires_grad=False)
+
+w1 = torch.randn((3, 4), requires_grad=True)
+b1 = torch.randn(4, requires_grad=True)
+
+w2 = torch.randn((4, 1), requires_grad=True)
+b2 = torch.randn(1, requires_grad=True)
+
+y1 = x @ w1 + b1
+y2 = y1 @ w2 + b2
+
+l = ((y - y2.squeeze()) ** 2).sum()
+
+l.backward()
+
+```
+
+```
+y2_grad = autograd.grad(l, y2, retain_graph=True)
+
+# y2 的梯度 d(y2) = 2(y2 - y)
+>>> y2_grad
+(tensor([[ 1.8210],
+        [ 6.5158],
+        [ 2.8230],
+        [-2.5306],
+        [ 6.3659]]),)
+>>> l
+tensor(25.1672, grad_fn=<SumBackward0>)
+>>> y
+tensor([ 0.1177, -0.4787,  1.1570, -0.7038, -0.3809])
+>>> y2
+tensor([[ 1.0282],
+        [ 2.7791],
+        [ 2.5685],
+        [-1.9691],
+        [ 2.8020]], grad_fn=<AddBackward0>)
+>>> 2 * (y2.squeeze() - y)
+tensor([ 1.8210,  6.5158,  2.8230, -2.5306,  6.3659], grad_fn=<MulBackward0>)
+
+# y1 的梯度 d(y1) = y2_grad @ w.t()
+>>> y2_grad[0] @ w2.t()
+tensor([[ 0.1996,  3.5949, -2.6491,  0.7318],
+        [ 0.7140, 12.8628, -9.4787,  2.6183],
+        [ 0.3094,  5.5730, -4.1067,  1.1344],
+        [-0.2773, -4.9956,  3.6813, -1.0169],
+        [ 0.6976, 12.5669, -9.2606,  2.5581]], grad_fn=<MmBackward0>)
+
+```
+
+```
+y1_grad = autograd.grad(l, y1, retain_graph=True)
+
+>>> y1_grad
+(tensor([[ 0.1996,  3.5949, -2.6491,  0.7318],
+        [ 0.7140, 12.8628, -9.4787,  2.6183],
+        [ 0.3094,  5.5730, -4.1067,  1.1344],
+        [-0.2773, -4.9956,  3.6813, -1.0169],
+        [ 0.6976, 12.5669, -9.2606,  2.5581]]),)
+>>> y1_grad[0].shape
+torch.Size([5, 4])
+
+# 计算 w1 的梯度
+>>> x.t() @ y1_grad[0]
+tensor([[  2.6609,  47.9346, -35.3232,   9.7575],
+        [  0.1913,   3.4460,  -2.5394,   0.7015],
+        [  0.2197,   3.9581,  -2.9167,   0.8057]])
+>>> w1.grad
+tensor([[  2.6609,  47.9346, -35.3232,   9.7575],
+        [  0.1913,   3.4460,  -2.5394,   0.7015],
+        [  0.2197,   3.9581,  -2.9167,   0.8057]])
+
+# 计算 b1 的梯度
+>>> y_grad[0].t()
+tensor([[ 0.1996,  0.7140,  0.3094, -0.2773,  0.6976],
+        [ 3.5949, 12.8628,  5.5730, -4.9956, 12.5669],
+        [-2.6491, -9.4787, -4.1067,  3.6813, -9.2606],
+        [ 0.7318,  2.6183,  1.1344, -1.0169,  2.5581]])
+>>> y_grad[0].t().sum(axis=1)
+tensor([  1.6432,  29.6020, -21.8138,   6.0257])
+
+# sum([0.1996,  0.7140,  0.3094, -0.2773,  0.6976]) = 1.6432
+>>> b1.grad 
+tensor([  1.6432,  29.6020, -21.8138,   6.0257])
+
+```
+
+## 一个更泛的图
+
+![](./assets/backprob_image_jq.png)
 
 ## 参考文献
+- https://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html
 - https://stackoverflow.com/questions/53975717/pytorch-connection-between-loss-backward-and-optimizer-step
+- https://www.cnblogs.com/zjuhaohaoxuexi/p/17067395.html
+- https://pytorch.org/tutorials/beginner/former_torchies/autograd_tutorial.html
+- https://www.cnblogs.com/zjuhaohaoxuexi/p/17067395.html
+- https://pytorch-tutorial.readthedocs.io/en/latest/tutorial/chapter02_basics/2_1_2_pytorch-basics-autograd/
