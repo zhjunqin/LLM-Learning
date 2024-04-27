@@ -101,9 +101,9 @@ Q = 3*a**3 - b**2
 
 假设 $a$ 和 $b$ 是神经网络的参数，$Q$ 是误差。在神经网络训练中，我们希望计算误差相对于参数的梯度，即：
 
-$$  \frac{\partial Q}{\partial a} = 9 a^2 $$
+$$ \frac{\partial Q}{\partial a} = 9 a^2 $$
 
-$$  \frac{\partial Q}{\partial b} = -2 b $$
+$$ \frac{\partial Q}{\partial b} = -2 b $$
 
 当我们在 $Q$ 上调用 `.backward()` 时，`autograd` 会计算这些梯度，并将它们存储在相应张量的 `.grad` 属性中。
 
@@ -182,12 +182,13 @@ $$ \vec{v} = \left[ \frac{\partial l}{\partial y_1} {\cdots} \frac{\partial l}{\
 那么根据链式法则，向量雅可比积将是 $l$ 相对于 $\vec{x}$ 的梯度：
 
 $$
-J^T \cdot \vec{v} = \begin{bmatrix}
+J^T \cdot \vec{v} = {\begin{bmatrix}
 {\frac{\partial y_1}{\partial x_1}}&{\cdots}&{\frac{\partial y_m}{\partial x_1}}\\
 {\vdots}&{\ddots}&{\vdots}\\
 {\frac{\partial y_1}{\partial x_n}}&{\cdots}&{\frac{\partial y_m}{\partial x_n}}\\ 
-\end{bmatrix}_{n \times m}
-\left[ \frac{\partial l}{\partial y_1} {\cdots} \frac{\partial l}{\partial y_m}  \right]^T_{m \times 1}
+\end{bmatrix}_{n \times m}}
+\times
+{\left[ \frac{\partial l}{\partial y_1} {\cdots} \frac{\partial l}{\partial y_m}  \right]^T_{m \times 1}}
 $$
 
 在上面的例子中，我们使用的就是向量雅可比积的这个特性；`external_grad` 表示 $\vec{v}$。
