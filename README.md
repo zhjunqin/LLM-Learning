@@ -14,10 +14,10 @@ LLM 学习笔记。
 - [Perplexity](./nlp/Perplexity.md)
 
 ## GPT models
-- [Nano GPT](./GPT/nanoGPT/README.md)
+- [Nano GPT](./GPT/nanoGPT)
 - [MiniGPT-4](./GPT/miniGPT4/README.md)
 - [TinyLlama](./GPT/TinyLlama/README.md)
-- [LLAMA](./GPT/Llama/README.md)
+- [LLAMA](./GPT/Llama)
 - [ChatML](./GPT/chatml.md)
 
 ## 多模态
@@ -35,20 +35,20 @@ LLM 学习笔记。
 
 ## Training
 - [前向和反向传播](./training/backprob/README.md)
-- [集合通信](./training/mpi/README.md)
+- [集合通信](./training/mpi)
 - [分布式训练并行化](./training/parallelism/README.md)
-- [DeepSpeed](./DeepSpeed/README.md)
+- [DeepSpeed](./DeepSpeed)
 - [混合精度训练](./training/amp/README.md)
-- [优化器](./training/optimizer/README.md)
+- [优化器](./training/optimizer/)
 - [Llama2 微调](./training/finetune/llama2_fine_tune.md)
 - Prompt Tuning 和 Prefix Tuning
 
 ## Inference
 - [llama.cpp](./inference/llama.cpp/README.md)
-- [vllm](./inference/vllm/README.md)
+- [vllm](./inference/vllm)
 - [TRT-LLM](./inference/TRT-LLM/)
 - [MLC-LLM](./inference/MLC-LLM/)
-- [推理优化](./inference/optimization/README.md)
+- [推理优化](./inference/optimization)
 
 ## Profiling
 - [Nsight Systems](./Profiling/nsight_systems.md)
