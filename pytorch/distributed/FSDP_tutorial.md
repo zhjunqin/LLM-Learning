@@ -473,3 +473,4 @@ def train(args, model, rank, world_size, train_loader, optimizer, epoch, sampler
 ## 参考文献
 - https://pytorch.org/tutorials/intermediate/FSDP_tutorial.html
 - https://www.cnblogs.com/rossiXYZ/p/15819817.html
+- [Facebook如何训练超大模型](https://www.cnblogs.com/rossiXYZ/p/15815013.html)
