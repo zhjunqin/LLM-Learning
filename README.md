@@ -5,12 +5,10 @@ LLM 学习笔记。
 ## Pytorch
 - [快速开始](./pytorch/quickstart)
 - [TorchScript 介绍](./pytorch/torchscript)
-- [Checkpoint 介绍](./pytorch/checkpoint)
 - [PyTorch Distributed/DDP/FSDP](./pytorch/distributed)
 - [自动微分 (AUTOGRAD)](./pytorch/autograd)
 
 ## NLP
-- [Transformer](./nlp/transformer/README.md)
 - [Perplexity](./nlp/Perplexity.md)
 
 ## GPT models
