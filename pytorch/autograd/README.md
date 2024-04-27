@@ -67,6 +67,7 @@ loss = (prediction - labels).sum()
 
 # pytorch 中 backward（）函数的计算，当进行反向传播时，梯度是累加起来而不是被替换，但在处理每一个 batch 时，如不需要与其他 batch 的梯度累加，需要对每个 batch 调用一遍 zero_grad（）将参数梯度置 0.
 # 如果不是处理每个 batch 清除一次梯度，而是两次或多次再清除一次，也就是进行了梯度累加，相当于提高了 batch_size
+# 执行 w.grad.data.zero_()
 optim.zero_grad()
 
 # 根据计算图，反向传播，通过链式法则，计算每个一参数的梯度
@@ -75,7 +76,7 @@ loss.backward() # backward pass
 
 # 优化器遍历它应该更新的所有参数（张量），并使用它们内部存储的 grad 来更新它们的值
 # 不同的优化器有不同的策略
-# 单纯的 SGD 计算 w = w - lr * grad
+# 单纯的 SGD 计算 w.data = w.data - lr * w.wgrad.data
 # Adam 会计算梯度一阶和二阶动量，然后再计算更新 w
 optim.step() # gradient descent
 
@@ -194,7 +195,90 @@ $$
 
 ## 计算图 (Computational Graph)
 
-## 在有向无环图（DAG）中的排除
+从概念上讲，`autograd` 在一个由 `Function` 对象组成的有向无环图（DAG）中记录数据（张量）和所有执行的操作（以及生成的新张量）。在这个 DAG 中，叶子节点是输入张量，根节点是输出张量。通过从根节点到叶子节点的追踪，可以使用链式法则自动计算梯度。
+
+在前向传递中，autograd 同时执行两个操作：
+- 运行请求的操作以计算生成的张量，以及
+- 在 DAG 中维护操作的梯度函数。
+
+当在 DAG 根节点上调用 `.backward()` 方法时，反向传播开始。然后，`autograd`：
+
+- 从每个 `.grad_fn` 计算梯度，
+- 将梯度累积到相应张量的 `.grad` 属性中，
+
+使用链式法则一直传播到叶子张量。
+
+下面是示例中 DAG 的可视化表示。在图中，箭头方向表示正向传递。节点代表正向传递中每个操作的反向函数。蓝色的叶子节点代表我们的叶子张量 $a$ 和 $b$。
+
+![](./assets/dag_autograd.png)
+
+在 PyTorch 中，DAG 是动态的。需要注意的重要一点是，在每次 `.backward()` 调用之后，图是从头开始重新创建的；`autograd` 会开始填充一个新的图。这正是允许在模型中使用控制流语句的原因；如果需要，可以在每次迭代中更改形状、大小和操作。
+
+## 从有向无环图（DAG）中排除
+
+`torch.autograd` 会跟踪所有 `requires_grad` 标志设置为 `True` 的张量上的操作。对于不需要梯度的张量，将 `requires_grad` 属性设置为 `False` 会将其排除在梯度计算 DAG 之外。
+
+即使只有一个输入张量设置了 requires_grad=True，操作的输出张量也会需要梯度。
+
+```
+x = torch.rand(5, 5)
+y = torch.rand(5, 5)
+z = torch.rand((5, 5), requires_grad=True)
+
+a = x + y
+print(f"Does `a` require gradients? : {a.requires_grad}")
+# Does `a` require gradients? : False
+b = x + z
+print(f"Does `b` require gradients?: {b.requires_grad}")
+# Does `b` require gradients?: True
+```
+
+```
+x = torch.rand((5, 5), requires_grad=True)
+y = torch.rand(5, 5)
+z = torch.rand(5, 5)
+
+a = x + y
+print(f"Does `a` require gradients? : {a.requires_grad}")
+# Does `a` require gradients? : False
+b = a + z
+print(f"Does `b` require gradients?: {b.requires_grad}")
+# Does `b` require gradients?: True
+c = y + z
+print(f"Does `c` require gradients?: {c.requires_grad}")
+# Does `c` require gradients?: False
+```
+
+在神经网络中，不计算梯度的参数通常被称为冻结参数 （frozen parameters）。如果事先知道不需要这些参数的梯度，将模型的一部分“冻结”起来是很有用的（这样可以通过减少 autograd 计算来提高性能）。
+
+在微调中，我们冻结大部分模型，通常只修改分类器层以对新标签进行预测。让我们通过一个小例子来演示这一点。与之前一样，我们加载一个预训练的 resnet18 模型，并冻结所有参数。
+
+```
+from torch import nn, optim
+
+model = resnet18(weights=ResNet18_Weights.DEFAULT)
+
+# Freeze all the parameters in the network
+for param in model.parameters():
+    param.requires_grad = False
+```
+
+假设我们想在一个包含 10 个标签的新数据集上微调模型。在 resnet 中，分类器是最后一个线性层 `model.fc`。我们可以简单地用一个新的线性层（默认情况下是非冻结的）替换它，作为我们的分类器。
+
+```
+model.fc = nn.Linear(512, 10)
+```
+
+现在模型中的所有参数除了 `model.fc` 都被冻结了。唯一需要计算梯度的是 `model.fc` 中的权重和偏置。
+
+```
+# Optimize only the classifier
+optimizer = optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)
+```
+
+请注意，尽管我们在优化器中注册了所有参数，但只有分类器的权重和偏置在计算梯度（因此在梯度下降中更新）。
+
+相同的排除功能也可以通过 `torch.no_grad()` 作为上下文管理器来使用。
 
 
 
