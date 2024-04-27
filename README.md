@@ -6,7 +6,7 @@ LLM 学习笔记。
 - [快速开始](./pytorch/quickstart/README.md)
 - [TorchScript 介绍](./pytorch/torchscript/README.md)
 - [Checkpoint 介绍](./pytorch/checkpoint/README.md)
-- [PyTorch Distributed/DDP/FSDP](./pytorch/distributed/README.md)
+- [PyTorch Distributed/DDP/FSDP](./pytorch/distributed)
 - [自动微分 (AUTOGRAD)](./pytorch/autograd/README.md)
 
 ## NLP
