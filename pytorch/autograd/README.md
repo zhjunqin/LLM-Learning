@@ -1,8 +1,6 @@
 # 自动微分 (AUTOGRAD)
 
-原文：https://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html
-
-torch.autograd 是 PyTorch 的自动微分引擎，用于支持神经网络训练。
+`torch.autograd` 是 PyTorch 的自动微分引擎，用于支持神经网络训练。
 
 ## 背景
 
