@@ -80,7 +80,7 @@ python benchmarks/benchmark_serving.py         --backend vllm         --model "M
 | 5            | 1000        | 218.21       | 213987             | 199774                 | 4.58                       | 980.65                         | 915.52                          | 119.85        | 232.46        | 370.85        | 82.95         | 82.95         | 96.64         |
 | 8            | 1000        | 202.53       | 213987             | 199774                 | 4.94                       | 1056.55                        | 986.37                          | 24919.84      | 49774.61      | 53385.48      | 104.71        | 128.04        | 199.54        |
 
-当 request-rate=8 时，出现了 Pending request。
+当 request-rate=8 时，出现了 Pending request。从上面也可以看到排队导致 TTFT 变长非常多。
 
 ```
 INFO 05-04 15:15:56 metrics.py:229] Avg prompt throughput: 635.9 tokens/s, Avg generation throughput: 1234.8 tokens/s, Running: 92 reqs, Swapped: 0 reqs, Pending: 323 reqs, GPU KV cache usage: 98.9%, CPU KV cache usage: 0.0%
