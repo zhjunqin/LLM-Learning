@@ -29,7 +29,7 @@
 
 ## 测试流程
 
-## vLLM
+### vLLM
 
 启动 vllm
 
@@ -64,11 +64,33 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
 ```
 
+
+benchmark 命令
+
 ```
 python benchmarks/benchmark_serving.py         --backend vllm         --model "Meta-Llama-3-8B-Instruct"         --dataset-name sharegpt         --dataset-path "ShareGPT_V3_unfiltered_cleaned_split.json"         --request-rate 1         --num-prompts 100 --result-dir /data/benchmark_result/vllm/  --save-result --metadata backend=vllm request-rate=1 num-prompts=100
  ```
 
+#### Benchmark 结果
 
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 1            | 100         | 105.08       | 22925              | 21789                  | 0.95                       | 218.17                         | 207.35                          | 68.75         | 172.66        | 216.07        | 24.68         | 26.86         | 33.59         |
+| 2            | 200         | 112.79       | 42889              | 44132                  | 1.77                       | 380.26                         | 391.28                          | 68.18         | 186.67        | 244.08        | 29.64         | 33.58         | 45.39         |
+| 5            | 1000        | 218.21       | 213987             | 199774                 | 4.58                       | 980.65                         | 915.52                          | 119.85        | 232.46        | 370.85        | 82.95         | 82.95         | 96.64         |
+| 8            | 1000        | 202.53       | 213987             | 199774                 | 4.94                       | 1056.55                        | 986.37                          | 24919.84      | 49774.61      | 53385.48      | 104.71        | 128.04        | 199.54        |
+
+当 request-rate=8 时，出现了 Pending request。
+
+```
+INFO 05-04 15:15:56 metrics.py:229] Avg prompt throughput: 635.9 tokens/s, Avg generation throughput: 1234.8 tokens/s, Running: 92 reqs, Swapped: 0 reqs, Pending: 323 reqs, GPU KV cache usage: 98.9%, CPU KV cache usage: 0.0%
+INFO 05-04 15:16:01 metrics.py:229] Avg prompt throughput: 1518.9 tokens/s, Avg generation throughput: 869.6 tokens/s, Running: 101 reqs, Swapped: 0 reqs, Pending: 292 reqs, GPU KV cache usage: 99.0%, CPU KV cache usage: 0.0%
+INFO 05-04 15:16:06 metrics.py:229] Avg prompt throughput: 1467.3 tokens/s, Avg generation throughput: 1036.5 tokens/s, Running: 114 reqs, Swapped: 0 reqs, Pending: 249 reqs, GPU KV cache usage: 98.2%, CPU KV cache usage: 0.0%
+INFO 05-04 15:16:12 metrics.py:229] Avg prompt throughput: 1678.5 tokens/s, Avg generation throughput: 1021.6 tokens/s, Running: 113 reqs, Swapped: 0 reqs, Pending: 221 reqs, GPU KV cache usage: 98.0%, CPU KV cache usage: 0.0%
+INFO 05-04 15:16:17 metrics.py:229] Avg prompt throughput: 1687.2 tokens/s, Avg generation throughput: 948.2 tokens/s, Running: 119 reqs, Swapped: 0 reqs, Pending: 183 reqs, GPU KV cache usage: 98.9%, CPU KV cache usage: 0.0%
+INFO 05-04 15:16:22 metrics.py:229] Avg prompt throughput: 1679.1 tokens/s, Avg generation throughput: 1004.6 tokens/s, Running: 108 reqs, Swapped: 0 reqs, Pending: 162 reqs, GPU KV cache usage: 99.4%, CPU KV cache usage: 0.0%
+
+```
 
 ### 参考文献
 - [benchmark](https://github.com/fw-ai/benchmark/tree/main)
