@@ -47,10 +47,10 @@ LLM 学习笔记。
 - [TRT-LLM](./inference/TRT-LLM/)
 - [MLC-LLM](./inference/MLC-LLM/)
 - [推理优化](./inference/optimization)
+- [推理框架Benchmark](./inference/benchmark/README.md)
 
 ## Profiling
 - [Nsight Systems](./Profiling/nsight_systems.md)
-- [Benchmark](./Profiling/benchmark/README.md)
 - [Roofline](./Profiling/roofline/README.md)
 
 ## RAG (Retrieval Augmented Generation)
