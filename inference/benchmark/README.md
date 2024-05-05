@@ -219,6 +219,151 @@ tvm._ffi.base.TVMError: Traceback (most recent call last):
 TVMError: Check failed: (result) is false: Failed to allocate 99121664 bytes with alignment 16 bytes.
 ```
 
+
+### TRT-LLM
+
+```
+# python3 scripts/launch_triton_server.py --world_size=1 --model_repo=/data/triton_backend/tensorrtllm_backend/triton_model_repo_llama3
+# I0505 03:10:14.909558 4734 pinned_memory_manager.cc:275] Pinned memory pool is created at '0x7f54d6000000' with size 268435456
+I0505 03:10:14.910038 4734 cuda_memory_manager.cc:107] CUDA memory pool is created on device 0 with size 67108864
+I0505 03:10:14.919862 4734 model_lifecycle.cc:461] loading: postprocessing:1
+I0505 03:10:14.919911 4734 model_lifecycle.cc:461] loading: preprocessing:1
+I0505 03:10:14.919963 4734 model_lifecycle.cc:461] loading: tensorrt_llm:1
+[TensorRT-LLM][WARNING] gpu_device_ids is not specified, will be automatically set
+I0505 03:10:16.958175 4734 python_be.cc:2362] TRITONBACKEND_ModelInstanceInitialize: preprocessing_0_0 (CPU device 0)
+I0505 03:10:16.958291 4734 python_be.cc:2362] TRITONBACKEND_ModelInstanceInitialize: postprocessing_0_0 (CPU device 0)
+[TensorRT-LLM][WARNING] max_beam_width is not specified, will use default value of 1
+[TensorRT-LLM][WARNING] max_tokens_in_paged_kv_cache is not specified, will use default value
+[TensorRT-LLM][WARNING] enable_chunked_context is not specified, will be set to false.
+[TensorRT-LLM][WARNING] Decoupled mode with a batch scheduler policy other than guaranteed_no_evict requires building the model with use_paged_context_fmha and setting enable_chunked_context to true. The batch scheduler policy will be set to guaranteed_no_evict since enable_chunked_context is false.
+[TensorRT-LLM][WARNING] kv_cache_free_gpu_mem_fraction is not specified, will use default value of 0.9 or max_tokens_in_paged_kv_cache
+[TensorRT-LLM][WARNING] enable_trt_overlap is not specified, will be set to false
+[TensorRT-LLM][WARNING] normalize_log_probs is not specified, will be set to true
+[TensorRT-LLM][WARNING] max_attention_window_size is not specified, will use default value (i.e. max_sequence_length)
+[TensorRT-LLM][WARNING] enable_kv_cache_reuse is not specified, will be set to false
+[TensorRT-LLM][INFO] Engine version 0.8.0 found in the config file, assuming engine(s) built by new builder API.
+[TensorRT-LLM][WARNING] [json.exception.type_error.302] type must be array, but is null
+[TensorRT-LLM][WARNING] Optional value for parameter lora_target_modules will not be set.
+[TensorRT-LLM][WARNING] Parameter max_draft_len cannot be read from json:
+[TensorRT-LLM][WARNING] [json.exception.out_of_range.403] key 'max_draft_len' not found
+[TensorRT-LLM][WARNING] [json.exception.type_error.302] type must be string, but is null
+[TensorRT-LLM][WARNING] Optional value for parameter quant_algo will not be set.
+[TensorRT-LLM][WARNING] [json.exception.type_error.302] type must be string, but is null
+[TensorRT-LLM][WARNING] Optional value for parameter kv_cache_quant_algo will not be set.
+[TensorRT-LLM][INFO] Initializing MPI with thread mode 1
+[TensorRT-LLM][INFO] MPI size: 1, rank: 0
+[TensorRT-LLM][INFO] Rank 0 is using GPU 0
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+I0505 03:10:21.051493 4734 model_lifecycle.cc:827] successfully loaded 'postprocessing'
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+I0505 03:10:21.096475 4734 model_lifecycle.cc:827] successfully loaded 'preprocessing'
+[TensorRT-LLM][INFO] TRTGptModel maxNumSequences: 40
+[TensorRT-LLM][INFO] TRTGptModel maxBatchSize: 40
+[TensorRT-LLM][INFO] TRTGptModel mMaxAttentionWindowSize: 2048
+[TensorRT-LLM][INFO] TRTGptModel enableTrtOverlap: 0
+[TensorRT-LLM][INFO] TRTGptModel normalizeLogProbs: 1
+[TensorRT-LLM][INFO] Loaded engine size: 15319 MiB
+[TensorRT-LLM][INFO] [MemUsageChange] Init cuBLAS/cuBLASLt: CPU +0, GPU +8, now: CPU 15361, GPU 15671 (MiB)
+[TensorRT-LLM][INFO] [MemUsageChange] Init cuDNN: CPU +2, GPU +10, now: CPU 15363, GPU 15681 (MiB)
+[TensorRT-LLM][INFO] [MemUsageChange] TensorRT-managed allocation in engine deserialization: CPU +0, GPU +15316, now: CPU 0, GPU 15316 (MiB)
+[TensorRT-LLM][INFO] [MemUsageChange] Init cuBLAS/cuBLASLt: CPU +0, GPU +8, now: CPU 15391, GPU 19711 (MiB)
+[TensorRT-LLM][INFO] [MemUsageChange] Init cuDNN: CPU +1, GPU +8, now: CPU 15392, GPU 19719 (MiB)
+[TensorRT-LLM][INFO] [MemUsageChange] TensorRT-managed allocation in IExecutionContext creation: CPU +0, GPU +0, now: CPU 0, GPU 15316 (MiB)
+[TensorRT-LLM][INFO] Allocate 4143972352 bytes for k/v cache.
+[TensorRT-LLM][INFO] Using 31616 total tokens in paged KV cache, and 16 blocks per sequence
+I0505 03:11:01.814307 4734 model_lifecycle.cc:827] successfully loaded 'tensorrt_llm'
+I0505 03:11:01.815009 4734 model_lifecycle.cc:461] loading: ensemble:1
+I0505 03:11:01.815403 4734 model_lifecycle.cc:827] successfully loaded 'ensemble'
+I0505 03:11:01.815518 4734 server.cc:606]
++------------------+------+
+| Repository Agent | Path |
++------------------+------+
++------------------+------+
+
+I0505 03:11:01.815586 4734 server.cc:633]
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------+
+| Backend     | Path                                                            | Config                                                                          |
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------+
+| tensorrtllm | /opt/tritonserver/backends/tensorrtllm/libtriton_tensorrtllm.so | {"cmdline":{"auto-complete-config":"false","backend-directory":"/opt/tritonserv |
+|             |                                                                 | er/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}} |
+| python      | /opt/tritonserver/backends/python/libtriton_python.so           | {"cmdline":{"auto-complete-config":"false","backend-directory":"/opt/tritonserv |
+|             |                                                                 | er/backends","min-compute-capability":"6.000000","shm-region-prefix-name":"pref |
+|             |                                                                 | ix0_","default-max-batch-size":"4"}}                                            |
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------+
+
+I0505 03:11:01.815628 4734 server.cc:676]
++----------------+---------+--------+
+| Model          | Version | Status |
++----------------+---------+--------+
+| ensemble       | 1       | READY  |
+| postprocessing | 1       | READY  |
+| preprocessing  | 1       | READY  |
+| tensorrt_llm   | 1       | READY  |
++----------------+---------+--------+
+
+I0505 03:11:01.947806 4734 metrics.cc:877] Collecting metrics for GPU 0: NVIDIA GeForce RTX 3090
+I0505 03:11:01.953214 4734 metrics.cc:770] Collecting CPU metrics
+I0505 03:11:01.953393 4734 tritonserver.cc:2498]
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Option                           | Value                                                                                                                          |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| server_id                        | triton                                                                                                                         |
+| server_version                   | 2.42.0                                                                                                                         |
+| server_extensions                | classification sequence model_repository model_repository(unload_dependents) schedule_policy model_configuration system_shared |
+|                                  | _memory cuda_shared_memory binary_tensor_data parameters statistics trace logging                                              |
+| model_repository_path[0]         | /data/triton_backend/tensorrtllm_backend/triton_model_repo_llama3                                                              |
+| model_control_mode               | MODE_NONE                                                                                                                      |
+| strict_model_config              | 1                                                                                                                              |
+| rate_limit                       | OFF                                                                                                                            |
+| pinned_memory_pool_byte_size     | 268435456                                                                                                                      |
+| cuda_memory_pool_byte_size{0}    | 67108864                                                                                                                       |
+| min_supported_compute_capability | 6.0                                                                                                                            |
+| strict_readiness                 | 1                                                                                                                              |
+| exit_timeout                     | 30                                                                                                                             |
+| cache_enabled                    | 0                                                                                                                              |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+
+I0505 03:11:01.990741 4734 grpc_server.cc:2519] Started GRPCInferenceService at 0.0.0.0:8001
+I0505 03:11:01.990982 4734 http_server.cc:4623] Started HTTPService at 0.0.0.0:8000
+I0505 03:11:02.032578 4734 http_server.cc:315] Started Metrics Service at 0.0.0.0:8002
+
+```
+
+```
+tensorrtllm_backend# ps -ef
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0  0 Apr28 pts/0    00:00:00 bash
+root        4730       1  0 03:10 pts/0    00:00:00 mpirun --allow-run-as-root -n 1 /opt/tritonserver/bin/tritonserver --model-repository=/data/triton_backend/tensor
+root        4734    4730 28 03:10 pts/0    00:00:12 /opt/tritonserver/bin/tritonserver --model-repository=/data/triton_backend/tensorrtllm_backend/triton_model_repo_
+root        4770    4734  8 03:10 pts/0    00:00:03 /opt/tritonserver/backends/python/triton_python_backend_stub /data/triton_backend/tensorrtllm_backend/triton_mode
+root        4771    4734  8 03:10 pts/0    00:00:03 /opt/tritonserver/backends/python/triton_python_backend_stub /data/triton_backend/tensorrtllm_backend/triton_mode
+
+```
+
+
+
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 1            | 100         | 105.14       | 22925              | 19565                  | 0.95                       | 218.05                         | 186.09                          | 103.37        | 211.27        | 242.60        | 23.80         | 25.97         | 30.24         |
+| 2            | 200         | 112.26       | 42889              | 38134                  | 1.78                       | 382.04                         | 339.68                          | 103.35        | 231.81        | 278.98        | 27.18         | 30.89         | 43.36         |
+| 5            | 1000        | 212.84       | 213987             | 169192                 | 4.70                       | 1005.39                        | 794.93                          | 1648.60       | 5476.14       | 6814.99       | 44.70         | 53.81         | 75.73         |
+| 8            | 1000        | 206.76       | 213987             | 168655                 | 4.84                       | 1034.95                        | 815.71                          | 37581.12      | 64263.81      | 67850.86      | 45.30         | 55.20         | 73.75         |
+
+在编译 trt-engine 的时候设置了 max-batch-size=40，在 request-rate=5 时就出现了 TTFT 延长的情况。
+
+
+## 对比
+
+这里对比，request-rate=5 时，各个框架的性能。总体来讲 lmdeploy 性能较好。
+
+| 框架     | request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| -------- | ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| vllm     | 5            | 1000        | 218.21       | 213987             | 199774                 | 4.58                       | 980.65                         | 915.52                          | 119.85        | 232.46        | 370.85        | 82.95         | 82.95         | 96.64         |
+| lmdeploy | 5            | 1000        | 212.51       | 213987             | 187896                 | 4.71                       | 1006.94                        | 884.16                          | 97.06         | 230.58        | 369.00        | 32.18         | 44.24         | 68.68         |
+| mlc-llm  | 5            | 1000        | 215.88       | 213987             | 179858                 | 4.61                       | 990.13                         | 833.13                          | 2550.71       | 6156.20       | 7806.20       | 52.74         | 62.02         | 85.82         |
+| TRT-LLM  | 5            | 1000        | 212.84       | 213987             | 169192                 | 4.70                       | 1005.39                        | 794.93                          | 1648.60       | 5476.14       | 6814.99       | 44.70         | 53.81         | 75.73         |
+
+
 ### 参考文献
 - [benchmark](https://github.com/fw-ai/benchmark/tree/main)
 - [llm-inference-benchmark](https://github.com/ninehills/llm-inference-benchmark/tree/main)
