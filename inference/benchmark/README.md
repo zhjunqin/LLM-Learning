@@ -183,7 +183,7 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 python benchmarks/benchmark_serving.py         --backend mlc-llm         --model "Meta-Llama-3-8B-Instruct"         --dataset-name sharegpt         --dataset-path "/data/vllm/ShareGPT_V3_unfiltered_cleaned_split.json"         --request-rate 2         --num-prompts 200 --endpoint /v1/chat/completions --result-dir /benchmark_result/mlc-llm  --save-result --metadata backend=mlc-llm request-rate=2 num-prompts=200 quant=w4a16
 ```
-
+#### Benchmark 结果
 
 | request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
 | ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
@@ -340,7 +340,12 @@ root        4771    4734  8 03:10 pts/0    00:00:03 /opt/tritonserver/backends/p
 
 ```
 
+测试命令
+```
+# python benchmarks/benchmark_serving.py         --backend tensorrt-llm         --model "Meta-Llama-3-8B-Instruct"         --dataset-name sharegpt         --dataset-path "/data/vllm/ShareGPT_V3_unfiltered_cleaned_split.json"         --request-rate 8         --num-prompts 1000 --endpoint /v2/models/ensemble/generate_stream --result-dir /benchmark_result/trt-llm  --save-result --metadata backend=tensorrt-llm request-rate=8 num-prompts=1000 
+```
 
+#### Benchmark 结果
 
 | request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
 | ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
