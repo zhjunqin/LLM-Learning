@@ -24,7 +24,6 @@
 
 | 模型                     |
 | ------------------------ |
-| Llama-2-7b-chat-hf       |
 | Meta-Llama-3-8B-Instruct |
 
 ## 测试流程
@@ -89,7 +88,135 @@ INFO 05-04 15:16:06 metrics.py:229] Avg prompt throughput: 1467.3 tokens/s, Avg 
 INFO 05-04 15:16:12 metrics.py:229] Avg prompt throughput: 1678.5 tokens/s, Avg generation throughput: 1021.6 tokens/s, Running: 113 reqs, Swapped: 0 reqs, Pending: 221 reqs, GPU KV cache usage: 98.0%, CPU KV cache usage: 0.0%
 INFO 05-04 15:16:17 metrics.py:229] Avg prompt throughput: 1687.2 tokens/s, Avg generation throughput: 948.2 tokens/s, Running: 119 reqs, Swapped: 0 reqs, Pending: 183 reqs, GPU KV cache usage: 98.9%, CPU KV cache usage: 0.0%
 INFO 05-04 15:16:22 metrics.py:229] Avg prompt throughput: 1679.1 tokens/s, Avg generation throughput: 1004.6 tokens/s, Running: 108 reqs, Swapped: 0 reqs, Pending: 162 reqs, GPU KV cache usage: 99.4%, CPU KV cache usage: 0.0%
+```
 
+上面未使用 flash attention，使用了 flash attention 后并没有提升，反而有点下降。
+
+
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 5            | 1000        | 218.53       | 213987             | 199778                 | 4.58                       | 979.21                         | 914.19                          | 123.25        | 231.46        | 370.58        | 84.14         | 98.26         | 158.75        |
+
+使用 AWQ 量化后的性能，也下降了。
+
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 5            | 1000        | 230.33       | 213987             | 199771                 | 4.34                       | 929.05                         | 867.33                          | 180.10        | 321.00        | 538.60        | 139.76        | 219.49        | 298.66        |
+
+
+### lmdeploy
+
+启动 lmdeploy
+
+```
+# lmdeploy serve api_server Meta-Llama-3-8B-Instruct   --server-port 23333
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+[WARNING] gemm_config.in is not found; using default GEMM algo
+HINT:    Please open http://0.0.0.0:23333 in a browser for detailed api usage!!!
+HINT:    Please open http://0.0.0.0:23333 in a browser for detailed api usage!!!
+HINT:    Please open http://0.0.0.0:23333 in a browser for detailed api usage!!!
+INFO:     Started server process [24522]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:23333 (Press CTRL+C to quit)
+
+```
+
+测试命令
+
+```
+python benchmarks/benchmark_serving.py         --backend lmdeploy         --model "llama3"          --dataset-name sharegpt         --dataset-path "ShareGPT_V3_unfiltered_cleaned_split.json"         --request-rate 2         --num-prompts 200  --port 23333 --endpoint /v1/completions --tokenizer "Meta-Llama-3-8B-Instruct" --result-dir /benchmark_result/lmdeploy  --save-result --metadata backend=lmdeploy request-rate=2 num-prompts=200 
+```
+
+#### Benchmark 结果
+
+
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 1            | 100         | 104.29       | 22925              | 20520                  | 0.96                       | 219.83                         | 196.77                          | 69.06         | 182.00        | 216.00        | 22.40         | 24.54         | 28.94         |
+| 2            | 200         | 111.77       | 42889              | 41697                  | 1.79                       | 383.73                         | 373.07                          | 67.81         | 195.30        | 267.04        | 26.59         | 29.49         | 37.77         |
+| 5            | 1000        | 212.51       | 213987             | 187896                 | 4.71                       | 1006.94                        | 884.16                          | 97.06         | 230.58        | 369.00        | 32.18         | 44.24         | 68.68         |
+| 8            | 1000        | 144.06       | 213987             | 187694                 | 6.94                       | 1485.41                        | 1302.89                         | 217.03        | 515.88        | 3661.76       | 74.94         | 94.23         | 141.89        |
+
+kv cache 量化
+
+```
+lmdeploy serve api_server Meta-Llama-3-8B-Instruct --quant-policy 8
+```
+
+
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 5            | 1000        | 212.48       | 213987             | 188221                 | 4.71                       | 1007.09                        | 885.82                          | 93.89         | 230.55        | 376.01        | 31.07         | 42.60         | 67.52         |
+| 8            | 1000        | 142.92       | 213987             | 186820                 | 7.00                       | 1497.24                        | 1307.16                         | 184.06        | 376.53        | 1024.51       | 68.76         | 86.98         | 136.48        |
+
+
+### mlc-llm
+
+```
+#  mlc_llm serve /data/mlc-llm/dist/llama3 --model-lib-path /data/mlc-llm/dist/libs/Meta-Llama-3-8B-Instruct-MLC-q4f16_1-cuda.so  --max-batch-size 48 --gpu-memory-utilization 0.90 --mode server
+[2024-05-05 02:50:13] INFO auto_device.py:79: Found device: cuda:0
+[2024-05-05 02:50:14] INFO auto_device.py:88: Not found device: rocm:0
+[2024-05-05 02:50:16] INFO auto_device.py:88: Not found device: metal:0
+[2024-05-05 02:50:17] INFO auto_device.py:88: Not found device: vulkan:0
+[2024-05-05 02:50:19] INFO auto_device.py:88: Not found device: opencl:0
+[2024-05-05 02:50:19] INFO auto_device.py:35: Using device: cuda:0
+[2024-05-05 02:50:19] INFO chat_module.py:379: Using model folder: /data/mlc-llm/dist/llama3
+[2024-05-05 02:50:19] INFO chat_module.py:380: Using mlc chat config: /data/mlc-llm/dist/llama3/mlc-chat-config.json
+[2024-05-05 02:50:19] INFO chat_module.py:529: Using library model: /data/mlc-llm/dist/libs/Meta-Llama-3-8B-Instruct-MLC-q4f16_1-cuda.so
+[2024-05-05 02:50:22] INFO engine_base.py:489: Under mode "local", max batch size 48 is specified by user, max KV cache token capacity is set to 8192, prefill chunk size is set to 8192. We choose small max batch size and KV cache capacity to use less GPU memory.
+[2024-05-05 02:50:24] INFO engine_base.py:489: Under mode "interactive", max batch size 48 is specified by user, max KV cache token capacity is set to 8192, prefill chunk size is set to 8192. We fix max batch size to 1 for interactive single sequence use.
+[2024-05-05 02:50:27] INFO engine_base.py:489: Under mode "server", max batch size 48 is specified by user, max KV cache token capacity is set to 126754, prefill chunk size is set to 8192. We use as much GPU memory as possible (within the limit of gpu_memory_utilization).
+[2024-05-05 02:50:27] INFO engine_base.py:527: The actual engine mode is "server". So max batch size is 48, max KV cache token capacity is 126754, prefill chunk size is 8192.
+[2024-05-05 02:50:27] INFO engine_base.py:536: Estimated total single GPU memory usage: 21833.68 MB (Parameters: 4308.13 MB. KVCache: 16054.47 MB. Temporary buffer: 1471.08 MB). The actual usage might be slightly larger than the estimated number.
+[2024-05-05 02:50:27] INFO engine_base.py:551: Please switch to mode "local" or "interactive" if you want to use less GPU memory or do not have many concurrent requests to process. Please override the arguments if you have particular values to set.
+INFO:     Started server process [29336]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+```
+
+测试命令
+
+```
+python benchmarks/benchmark_serving.py         --backend mlc-llm         --model "Meta-Llama-3-8B-Instruct"         --dataset-name sharegpt         --dataset-path "/data/vllm/ShareGPT_V3_unfiltered_cleaned_split.json"         --request-rate 2         --num-prompts 200 --endpoint /v1/chat/completions --result-dir /benchmark_result/mlc-llm  --save-result --metadata backend=mlc-llm request-rate=2 num-prompts=200 quant=w4a16
+```
+
+
+| request-rate | num-prompts | duration (s) | Total input tokens | Total generated tokens | Request throughput (req/s) | Input token throughput (tok/s) | Output token throughput (tok/s) | P50 TTFT (ms) | P90 TTFT (ms) | P99 TTFT (ms) | P50 TPOT (ms) | P90 TPOT (ms) | P99 TPOT (ms) |
+| ------------ | ----------- | ------------ | ------------------ | ---------------------- | -------------------------- | ------------------------------ | ------------------------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| 1            | 100         | 100.11       | 22925              | 20586                  | 1.00                       | 228.99                         | 205.63                          | 63.30         | 149.08        | 171.03        | 12.83         | 29.01         | 34.72         |
+| 2            | 200         | 108.81       | 42889              | 39678                  | 1.81                       | 393.48                         | 364.65                          | 71.64         | 171.24        | 226.43        | 36.07         | 40.28         | 53.17         |
+| 5            | 1000        | 215.88       | 213987             | 179858                 | 4.61                       | 990.13                         | 833.13                          | 2550.71       | 6156.20       | 7806.20       | 52.74         | 62.02         | 85.82         |
+
+在 request-rate=5 时就出现了 TTFT 的延长，说明 mlc-llm 应该没有很好的 continuous batching 的能力。
+
+当启动时设置的  `--max-batch-size` 过大，比如 64 时，就会出现如下错误：
+
+```
+Exception in thread Thread-1 (_background_loop):
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/opt/conda/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.10/site-packages/mlc_llm/serve/engine_base.py", line 1096, in _background_loop
+    self._ffi["run_background_loop"]()
+  File "tvm/_ffi/_cython/./packed_func.pxi", line 332, in tvm._ffi._cy3.core.PackedFuncBase.__call__
+  File "tvm/_ffi/_cython/./packed_func.pxi", line 263, in tvm._ffi._cy3.core.FuncCall
+  File "tvm/_ffi/_cython/./packed_func.pxi", line 252, in tvm._ffi._cy3.core.FuncCall3
+  File "tvm/_ffi/_cython/./base.pxi", line 182, in tvm._ffi._cy3.core.CHECK_CALL
+  File "/opt/conda/lib/python3.10/site-packages/tvm/_ffi/base.py", line 481, in raise_last_ffi_error
+    raise py_err
+tvm._ffi.base.TVMError: Traceback (most recent call last):
+  3: tvm::runtime::PackedFuncObj::Extractor<tvm::runtime::PackedFuncSubObj<tvm::contrib::__mk_TVM0::{lambda(tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*)#1}> >::Call(tvm::runtime::PackedFuncObj const*, tvm::contrib::__mk_TVM0, tvm::runtime::TVMRetValue)
+  2: void tvm::contrib::thrust_sort<float, int>(DLTensor*, DLTensor*, DLTensor*, bool, int, DLTensor*) [clone .isra.0]
+  1: thrust::detail::temporary_allocator<unsigned char, thrust::detail::execute_with_allocator<thrust::mr::allocator<max_align_t, tvm::contrib::WorkspaceMemoryResource>, thrust::cuda_cub::execute_on_stream_nosync_base> >::allocate(unsigned long)
+  0: _ZN3tvm7runtime6deta
+  File "/workspace/tvm/src/runtime/contrib/thrust/thrust.cu", line 66
+TVMError: Check failed: (result) is false: Failed to allocate 99121664 bytes with alignment 16 bytes.
 ```
 
 ### 参考文献
