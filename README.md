@@ -42,7 +42,6 @@ LLM 学习笔记。
 - Prompt Tuning 和 Prefix Tuning
 
 ## Inference
-- [llama.cpp](./inference/llama.cpp/README.md)
 - [vllm](./inference/vllm)
 - [TRT-LLM](./inference/TRT-LLM/)
 - [MLC-LLM](./inference/MLC-LLM/)
