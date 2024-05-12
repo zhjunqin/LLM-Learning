@@ -1,11 +1,11 @@
 # LLAVA
 
-2024 年 1 月 30 日推出了 LLaVA-NeXT(LLaVA-1.6) 相比较于 LLaVA-1.5(October 2023) 在推理、OCR和世界知识方面有所改进。
+2024 年 1 月 30 日推出了 LLaVA-NeXT(LLaVA-1.6) 相比较于 LLaVA-1.5(October 2023) 在推理、OCR 和世界知识方面有所改进。
 
 ## 比较
 相比 LLaVA-1.5，LLaVA-NeXT 有以下几点改进：
 
-- 将输入图像分辨率提高 4 倍的像素。这使得它能够获取更多的视觉细节。它支持三种宽高比，分辨率可达到 672x672、336x1344、1344x336。
+- 将输入图像分辨率提高 4 倍的像素。这使得它能够获取更多的视觉细节。它支持三种宽高比，分辨率可达到 $672 \times 672$、$336 \times 1344$、$1344 \times 336$。
 - 通过改进的视觉指令调整数据混合，实现更好的视觉推理和 OCR 能力。
 - 在更多场景下提供更好的视觉对话，涵盖不同的应用。具备更好的世界知识和逻辑推理能力。
 - 使用 SGLang 实现高效的部署和推理。
@@ -195,6 +195,7 @@ IMAGE_PLACEHOLDER = "<image-placeholder>"
         image_processor,
         model.config
     ).to(model.device, dtype=torch.float16)
+    # 处理完成后的图片 Tensor
     # Tensor shape: torch.Size([1, 5, 3, 336, 336])
 
     input_ids = (
@@ -255,6 +256,9 @@ def process_images(images, image_processor, model_cfg):
 
 llava-v1.5 输出了 1 张图片 Tensor，llava-v1.6 输出了 5 张图片 Tensor。
 
+```
+# Tensor shape: torch.Size([1, 5, 3, 336, 336])
+```
 ### 图片 encoder
 
 ```
@@ -284,6 +288,8 @@ torch.Size([1, 2202, 4096])
 (Pdb) inputs_embeds.shape
 torch.Size([1, 2242, 4096])
 ```
+
+主要的处理代码在 `prepare_inputs_labels_for_multimodal` 中。
 
 mm_projector 是两个 MLP 层。
 
