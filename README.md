@@ -13,12 +13,11 @@ LLM 学习笔记。
 
 ## GPT models
 - [Nano GPT](./GPT/nanoGPT)
-- [MiniGPT-4](./GPT/miniGPT4/README.md)
-- [TinyLlama](./GPT/TinyLlama/README.md)
 - [LLAMA](./GPT/Llama)
 - [ChatML](./GPT/chatml.md)
 
 ## 多模态
+- [VIT](./Multimodal/VIT.md)
 - [LLAVA](./Multimodal/LLAVA.md)
 
 ## 关键技术
