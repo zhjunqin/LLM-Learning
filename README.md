@@ -17,7 +17,7 @@ LLM 学习笔记。
 - [ChatML](./GPT/chatml.md)
 
 ## 多模态
-- [VIT](./Multimodal/VIT.md)
+- [ViT](./Multimodal/VIT.md)
 - [LLAVA](./Multimodal/LLAVA.md)
 
 ## 关键技术

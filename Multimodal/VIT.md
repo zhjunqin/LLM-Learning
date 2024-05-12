@@ -1,9 +1,9 @@
-# VIT 模型
+# ViT 模型
 
-Vision Transformer (ViT) 目前是大部分多模态大模型的编码器的 base。这里介绍一下 VIT 的详细模型结构。
+Vision Transformer (ViT) 目前是大部分多模态大模型的编码器的 base。这里介绍一下 ViT 的详细模型结构。
 
 
-## VIT
+## ViT 介绍
 
 ![](./assets/vit_model.png)
 
@@ -33,7 +33,7 @@ ViT 参考BERT，共设置了三种模型变体（增加了 Huge 变体）如下
 
 ![](./assets/vit_model_benchmark.png)
 
-## 使用 VIT
+## 使用 ViT
 
 ```
 from transformers import AutoImageProcessor, ViTModel
