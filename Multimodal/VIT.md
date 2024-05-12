@@ -19,7 +19,7 @@ Vision Transformer (ViT) 目前是大部分多模态大模型的编码器的 bas
 
 ![](./assets/vit_model_formula.png)
 
-其中 MSA 为 multiheaded selfattention。详细模型结构如下：
+其中 MSA 为 `multi-headed self-attention`。详细模型结构如下：
 
 ![](./assets/vit_model_detail.png)
 
