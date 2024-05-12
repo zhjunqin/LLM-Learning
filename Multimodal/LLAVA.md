@@ -279,7 +279,7 @@ encode_images:  torch.Size([5, 576, 4096])
 ```
 
 
-不同原始分辨率的图片输出的 token 数量不同，示例：
+虽然不同原始分辨率处理后的图片 Tensor shape 相同，但是不同原始分辨率的图片最终进入到 LLM 的 token 数量不同，示例：
 
 ```
 (Pdb) p inputs_embeds.shape
