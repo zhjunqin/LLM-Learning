@@ -19,6 +19,7 @@ LLM 学习笔记。
 ## 多模态
 - [ViT](./Multimodal/VIT.md)
 - [LLAVA](./Multimodal/LLAVA.md)
+- [QwenVL](./Multimodal/QwenVL.md)
 
 ## 关键技术
 - [FP32/FP16/BF16](./technology/precision/fp32_fp16_bf16.md)
