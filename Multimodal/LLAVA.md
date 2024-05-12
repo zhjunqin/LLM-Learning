@@ -1,4 +1,4 @@
-# LLAVA
+# LLaVA
 
 2024 年 1 月 30 日推出了 LLaVA-NeXT(LLaVA-1.6) 相比较于 LLaVA-1.5(October 2023) 在推理、OCR 和世界知识方面有所改进。
 

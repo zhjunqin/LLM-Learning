@@ -18,7 +18,7 @@ LLM 学习笔记。
 
 ## 多模态
 - [ViT](./Multimodal/VIT.md)
-- [LLAVA](./Multimodal/LLAVA.md)
+- [LLaVA](./Multimodal/LLAVA.md)
 - [QwenVL](./Multimodal/QwenVL.md)
 
 ## 关键技术
