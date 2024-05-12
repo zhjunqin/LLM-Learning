@@ -33,7 +33,77 @@ ViT 参考BERT，共设置了三种模型变体（增加了 Huge 变体）如下
 
 ![](./assets/vit_model_benchmark.png)
 
+## 使用 VIT
+
+```
+from transformers import AutoImageProcessor, ViTModel
+import torch
+from datasets import load_dataset
+
+dataset = load_dataset("huggingface/cats-image")
+image = dataset["test"]["image"][0]
+
+image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
+model = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+
+inputs = image_processor(image, return_tensors="pt")
+
+with torch.no_grad():
+    outputs = model(**inputs)
+
+last_hidden_states = outputs.last_hidden_state
+list(last_hidden_states.shape)
+# [1, 197, 768]
+```
+
+`google/vit-base-patch16-224-in21k` 模型结构
+```
+ViTModel(
+  (embeddings): ViTEmbeddings(
+    (patch_embeddings): ViTPatchEmbeddings(
+      (projection): Conv2d(3, 768, kernel_size=(16, 16), stride=(16, 16))
+    )
+    (dropout): Dropout(p=0.0, inplace=False)
+  )
+  (encoder): ViTEncoder(
+    (layer): ModuleList(
+      (0-11): 12 x ViTLayer(
+        (attention): ViTAttention(
+          (attention): ViTSelfAttention(
+            (query): Linear(in_features=768, out_features=768, bias=True)
+            (key): Linear(in_features=768, out_features=768, bias=True)
+            (value): Linear(in_features=768, out_features=768, bias=True)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+          (output): ViTSelfOutput(
+            (dense): Linear(in_features=768, out_features=768, bias=True)
+            (dropout): Dropout(p=0.0, inplace=False)
+          )
+        )
+        (intermediate): ViTIntermediate(
+          (dense): Linear(in_features=768, out_features=3072, bias=True)
+          (intermediate_act_fn): GELUActivation()
+        )
+        (output): ViTOutput(
+          (dense): Linear(in_features=3072, out_features=768, bias=True)
+          (dropout): Dropout(p=0.0, inplace=False)
+        )
+        (layernorm_before): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+        (layernorm_after): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+      )
+    )
+  )
+  (layernorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+  (pooler): ViTPooler(
+    (dense): Linear(in_features=768, out_features=768, bias=True)
+    (activation): Tanh()
+  )
+)
+```
+
+
 ## 参考文献
 - [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://arxiv.org/abs/2010.11929)
 - https://zhuanlan.zhihu.com/p/445122996
-- 
+- https://blog.csdn.net/weixin_42392454/article/details/122667271
+- https://huggingface.co/docs/transformers/model_doc/vit
