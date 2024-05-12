@@ -361,7 +361,7 @@ class Resampler(nn.Module):
         return query.unsqueeze(1).repeat(1, N, 1)
 ```
 
-其他部分都常见的 LLM 流程。
+其他部分都是常见的 LLM 流程。
 
 ## 参考文献
 - [Qwen-VL: A Versatile Vision-Language Model for Understanding, Localization, Text Reading, and Beyond
