@@ -34,24 +34,24 @@
 
 ```
 from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage， SystemMessage， AIMessage
+from langchain.schema import HumanMessage, SystemMessage, AIMessage
 
 api_key = "xxx.xxx"
 server_url = "https://open.bigmodel.cn/api/paas/v4"
 
 model = ChatOpenAI(
-    model="glm-3-turbo"，
-    openai_api_key=api_key，
-    openai_api_base=server_url，
-    max_tokens=100，
-    temperature=0.7，
+    model="glm-3-turbo",
+    openai_api_key=api_key,
+    openai_api_base=server_url,
+    max_tokens=100,
+    temperature=0.7,
 )
 
-from langchain_core.messages import HumanMessage， SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 
 messages = [
-    SystemMessage(content="Translate the following from English into Italian")，
-    HumanMessage(content="hi!")，
+    SystemMessage(content="Translate the following from English into Italian"),
+    HumanMessage(content="hi!"),
 ]
 
 model.invoke(messages)
@@ -59,7 +59,7 @@ model.invoke(messages)
 ```
 
 ```
-AIMessage(content='Ciao!'， response_metadata={'token_usage': {'completion_tokens': 5， 'prompt_tokens': 2014， 'total_tokens': 2019}， 'model_name': 'glm-3-turbo'， 'system_fingerprint': None， 'finish_reason': 'stop'， 'logprobs': None}， id='run-227beb4f-0e0b-42cb-b910-34746b36c764-0')
+AIMessage(content='Ciao!', response_metadata={'token_usage': {'completion_tokens': 5, 'prompt_tokens': 2014, 'total_tokens': 2019}, 'model_name': 'glm-3-turbo', 'system_fingerprint': None, 'finish_reason': 'stop', 'logprobs': None}, id='run-227beb4f-0e0b-42cb-b910-34746b36c764-0')
 ```
 
 如果使用了 LangSmith，登录到 LangSmith 上可以看到相关的 Trace。
@@ -116,18 +116,18 @@ from langchain_core.prompts import ChatPromptTemplate
 system_template = "Translate the following into {language}:"
 
 prompt_template = ChatPromptTemplate.from_messages(
-    [("system"， system_template)， ("user"， "{text}")]
+    [("system", system_template), ("user", "{text}")]
 )
 
-result = prompt_template.invoke({"language": "italian"， "text": "hi"})
-# ChatPromptValue(messages=[SystemMessage(content='Translate the following into italian:')， HumanMessage(content='hi')])
+result = prompt_template.invoke({"language": "italian", "text": "hi"})
+# ChatPromptValue(messages=[SystemMessage(content='Translate the following into italian:'), HumanMessage(content='hi')])
 
 result.to_messages()
-# [SystemMessage(content='Translate the following into italian:')，
+# [SystemMessage(content='Translate the following into italian:'),
 # HumanMessage(content='hi')]
 
 chain = prompt_template | model | parser
-chain.invoke({"language": "italian"， "text": "hi"})
+chain.invoke({"language": "italian", "text": "hi"})
 
 ```
 
@@ -160,8 +160,8 @@ from langserve import add_routes
 # 1. Create prompt template
 system_template = "Translate the following into {language}:"
 prompt_template = ChatPromptTemplate.from_messages([
-    ('system'， system_template)，
-    ('user'， '{text}')
+    ('system', system_template),
+    ('user', '{text}')
 ])
 
 # 2. Create model
@@ -176,23 +176,23 @@ chain = prompt_template | model | parser
 
 # 4. App definition
 app = FastAPI(
-  title="LangChain Server"，
-  version="1.0"，
-  description="A simple API server using LangChain's Runnable interfaces"，
+  title="LangChain Server",
+  version="1.0",
+  description="A simple API server using LangChain's Runnable interfaces",
 )
 
 # 5. Adding chain route
 
 add_routes(
-    app，
-    chain，
-    path="/chain"，
+    app,
+    chain,
+    path="/chain",
 )
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app， host="0.0.0.0"， port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
 执行
@@ -231,7 +231,7 @@ LANGSERVE: See all available routes at /docs/
 from langserve import RemoteRunnable
 
 remote_chain = RemoteRunnable("http://localhost:8000/chain/")
-print(remote_chain.invoke({"language": "chinese"， "text": "May the force be with you!"}))
+print(remote_chain.invoke({"language": "chinese", "text": "May the force be with you!"}))
 ```
 
 ## Conclusion

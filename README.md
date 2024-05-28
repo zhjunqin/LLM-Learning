@@ -52,12 +52,10 @@ LLM 学习笔记。
 - [Nsight Systems](./Profiling/nsight_systems.md)
 - [Roofline](./Profiling/roofline/README.md)
 
-## RAG (Retrieval Augmented Generation)
-- [Embedding](./RAG/Embedding.md)
-- [RAG](./RAG/README.md)
-
 ## LLM Agents
-
+- [LangChain](./Agents/Langchain/README.md)
+- [Embedding](./Agents/RAG/Embedding.md)
+- [RAG](./Agents/RAG/README.md)
 
 ## 开源项目
 - [项目列表](./Opensource/README.md)
