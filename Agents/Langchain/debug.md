@@ -243,6 +243,28 @@ Calling: {'name': 'tavily_search_results_json', 'args': {'query': 'weather in Sa
 Back to the model!
 ```
 
+## Http Verbose Logging
+
+
+```
+import http
+import logging
+import requests
+
+
+http.client.HTTPConnection.debuglevel = 1
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("requests.packages.urllib3")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
+
+requests.get('http://secariolabs.com')
+```
+
+
 ## 参考文献
 - https://github.com/langchain-ai/langchain/issues/6628
 - https://github.com/langchain-ai/langchain/discussions/6511
+- https://secariolabs.com/logging-raw-http-requests-in-python/
