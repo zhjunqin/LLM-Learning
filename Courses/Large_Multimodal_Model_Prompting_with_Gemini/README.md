@@ -445,8 +445,12 @@ response = """
 ```
 
 ```
+file_path = "dlai-sc-gemini-bucket/sc-gc-c3-LLMOps_L1_v3.mp4.mp4"
+file_path = "dlai-sc-gemini-bucket/sc-gc-c3-LLMOps_L3_v4.mp4"
+
 file_path = "dlai-sc-gemini-bucket/sc-gc-c3-LLMOps_L2_v4.mp4"
 video_url = f"https://storage.googleapis.com/{file_path}"
+
 
 
 role = """
