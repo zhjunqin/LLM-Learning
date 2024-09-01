@@ -138,3 +138,79 @@ response = client.chat.completions.create(
 }
 
 ```
+
+## Restful API demo
+
+```
+import json
+import requests
+import base64
+from io import BytesIO
+from PIL import Image
+
+headers = {
+    'Authorization': 'Bearer sk-xxx'
+}
+
+model_name = 'xxx'
+api_url = 'http://xxx/v1/chat/completions'
+
+# 图片转base64
+def img_to_base64(img_path):
+    with open(img_path,"rb") as f:
+        base64_str = base64.b64encode(f.read()).decode("utf-8")
+    return base64_str
+
+# 构造对话消息
+def construct_message(prompt, img_file):
+    text =  {"type": "text", "text": prompt}
+    if img_file:
+        b64 = img_to_base64(img_file)
+        image = {"type": "image_url",
+                 "image_url": { "url": f"data:image/jpeg;base64,{b64}"}}
+        messages = [{"role": "user", "content": [text, image]}]
+    else:
+        messages = [{"role": "user", "content": [text]}]
+    return messages
+
+
+def get_response(prompt, img_file=None, stream=True):
+    messages = construct_message(prompt, img_file)
+    datas = {"model": model_name, "messages": messages,  "temperature": 0.7, 
+             "stream": stream,   "max_tokens":2048}
+    response = requests.post(url=api_url, headers=headers, data=json.dumps(datas), 
+               stream=stream)
+    if response.status_code != 200:
+        raise ValueError("Failed to generate response: " + response.text)
+    if stream:
+        result = []
+        for chunk in response.iter_lines():
+            if not chunk:
+                continue
+            json_str = chunk.decode('utf-8')
+            if json_str[6:] == "[DONE]":
+                break
+            chunk = json.loads(json_str[6:])
+            if "choices" in chunk and len(chunk["choices"]) > 0:
+                choice = chunk["choices"][0]
+                if "delta" in choice:
+                    print(choice["delta"]["content"], end ="", flush=True)
+                    result.append(choice["delta"]["content"])
+        print("")
+        return "".join(result)
+    else:
+        response = response.json()
+        res = response['choices'][0]['message']['content']
+        print(res)
+        return res
+
+def chat(question, img_file=None):
+    response = get_response(question, img_file)
+    return response
+
+if __name__ == '__main__':
+    image_file = 'xxx'
+    question = "请详细描述图片"
+
+    chat(question, image_file)
+```
