@@ -498,23 +498,17 @@ def RotaryEmbedding(torch.nn.Module):
 
 **位置 n 的旋转位置编码（RoPE），本质上就是数字 n 的 β 进制编码！**
 
-通过进制转换，将原来的底数 $\beta$ (10000)，扩大 k 倍 (10000k)，为了让 RoPE 在更长序列下的编码效果等价于原始序列下的效果，需要满足：
+通过进制转换，将原来的底数 $\beta$ (10000)，扩大 $k$ 倍 (10000k)，为了让 RoPE 在更长序列下的编码效果等价于原始序列下的效果，需要满足：
 
 $$ \frac{n}{(\beta \lambda)^{d/2 - 1}} = \frac{n/k}{(\beta )^{d/2 - 1}} $$
 
-- n：序列长度（sequence length）。即模型一次可以处理的最大 token 数
+- n：序列长度（sequence length）。即模型一次可以处理的最大 token 数，这里是扩展后的序列长度
 - k：缩放因子（scaling factor），用于扩展 RoPE 的可用序列长度。比如 k=8 意味着序列长度扩展 8 倍
-- β（beta）：缩放参数（scaling parameter），用于调整 RoPE 的频率范围，使其适配更长的序列。
-- λ（lambda）：原始 RoPE 的频率基底（base frequency），通常是一个常数（如 10000）。
 - d：特征维度（hidden dimension），通常指 RoPE 作用的维度索引。
 - 左边：原始 RoPE 在序列长度 n 下的频率分布。
 - 右边：缩放后 RoPE 在序列长度 n/k 下的频率分布。
 
-这个等式的含义是：通过调整 β，使得在扩展序列长度 n/k 时，RoPE 的频率分布与原始 n 时保持一致。
-
-不过，个人感觉好像把 $k$ 放到左边是不是更容易理解？
-
-$$ \frac{n \cdot k}{(\beta \lambda)^{d/2 - 1}} = \frac{n}{(\beta )^{d/2 - 1}} $$
+这个等式的含义是：通过调整 $\beta$，使得在扩展序列长度 $n/k$ 时，RoPE 的频率分布与原始 $n$ 时保持一致。
 
 求解得到： 
 
@@ -549,7 +543,7 @@ class LlamaDynamicNTKScalingRotaryEmbedding(LlamaRotaryEmbedding):
         # difference to the original RoPE: inv_freq is recomputed when the sequence length > original length
         seq_len = torch.max(position_ids) + 1
         if seq_len > self.max_position_embeddings:
-            # 计算新的基地
+            # 计算新的基底
             # 
             base = self.base * (
                 (self.scaling_factor * seq_len / self.max_position_embeddings) - (self.scaling_factor - 1)
@@ -564,10 +558,90 @@ class LlamaDynamicNTKScalingRotaryEmbedding(LlamaRotaryEmbedding):
 
 ```
 
+### YARN
+
+YARN 的全称是 Yet Another RoPE Extention，顾名思义，YARN 是对 RoPE 的一种扩展，应用 YARN 后只需在少量的长文本数据上微调即可实现模型上下文长度的扩展。
+
+#### 数学推导中的频率参数 $\theta$
+
+$\theta_i$ 定义为 
+
+$$θ_i=10000^{−2i/d}$$
+
+其中，$d$ 是隐层的维度大小，$i$ 是某个维度，大小为 $[0, d/2)$，10000 是基底。
+
+频率参数 $\theta_i$ 决定了每个维度的旋转速度：
+
+- 对于低维度（即 $i$ 值较小的维度），更接近于 $1$。
+- 对于高维度（即 $i$ 值较大的维度），会迅速衰减到接近 $0$。
+
+
+每个位置上的旋转角度为 $m \cdot \theta_i$，则
+- 当 $\theta_i$ 接近 $1$（低维度），$m \cdot \theta_i$ 的变化较大，旋转更快。
+- 当 $\theta_i$ 接近 $0$（高维度），$m \cdot \theta_i$ 的变化较小，旋转更慢。
+
+因此低维度具有更快的旋转（对应局部细节捕捉），高维度具有更慢的旋转（对应长距离依赖）。这种设计巧妙地结合了长距离和短距离的信息编码能力。
+
+#### 各个方法的变化
+
+这里定 $g(m)$ ：位置 $m$ 变化而变化，定义 $h(\theta_i)$：随着 $\theta_i$ 变化而变化。
+
+- 原始 RoPE 算法： $g(m) = m$，$h(\theta_i)=10000^{−2i/d}$。
+- 位置插值算法： $g(m)=m/k$，$h(\theta_i)=10000^{−2i/d}$。
+- NTK-Aware Scaled RoPE： $g(m)=m$，$h(\theta_i)=\theta_i \cdot k^{-2i/(d-2)}=(10000 \cdot k^{d/(d-2)})^{−2i/d} $
+
+
+#### NTK-by-parts
+
+“NTK-by-parts”方法着重考虑 RoPE 公式中定义的波长。
+
+对于每一个维度 $i$，其波长 $\lambda_i = \frac{2\pi}{\theta_i} = 2\pi b^{2i/d}$
+
+其中  $\theta_i=b^{−2i/d}$，$b$ 为基底 $b=10000$。
+
+- 当维度 $i$ 比较小时，波长 $\lambda_i$ 比较小
+- 当维度 $i$ 比较大时，波长 $\lambda_i$ 比较小
+
+```
+b=10000， d=128
+i	θ_i		波长		在1024位置内的频率
+------------------------------------------------------------
+0	1.00e+00	6.3		162.97
+8	3.16e-01	19.9		51.54
+16	1.00e-01	62.8		16.30
+24	3.16e-02	198.7		5.15
+32	1.00e-02	628.3		1.63
+40	3.16e-03	1986.9		0.52
+48	1.00e-03	6283.2		0.16
+56	3.16e-04	19869.2		0.05
+63	1.15e-04	54410.1		0.02
+```
+
+然后根据波长与原始上下文大小 $L$的比值：$r(i)= \frac{L}{\lambda_i}$，将维度分为不同的类别：
+
+- 当维度 $i$ 比较小时，且波长远小于 $L$ 时，则不做插值（保留原来的 $\theta_i$）
+- 当维度 $i$ 比较大时，且波长大于等于 $L$ 时，则做插值
+- 在这两者之间则做 "NTK-aware" 插值
+
+根据上述策略，“NTK-by-parts”方法对 RoPE 的修改可以用以下公式表示： 定义 $g(m)=m$
+，保持位置索引不变； $h(\theta_i) = (1- \gamma(r(i)))\frac{\theta_i}{k} + \gamma(r(i))\theta_i$，根据维度的不同类别对频率参数进行相应的变换。其中，$\gamma(r)$ 函数定义为：
+
+$$
+\gamma(r) = 
+\begin{cases}
+    0, & \text{if } r > \beta \\
+    1, & \text{if } r < \alpha \\
+    \frac{r - \beta}{\alpha - \beta}, & \text{otherwise}
+\end{cases}
+$$
+
+核心优势： 与之前的 PI 和 “NTK-aware” 插值方法相比，“NTK-by-parts” 方法在处理 RoPE 维度时有更强的针对性。PI 方法对所有维度同等插值，容易丢失高频信息；“NTK-aware” 方法虽然尝试通过改变频率缩放方式来缓解问题，但会导致某些维度的外推，产生“越界”值，影响模型性能。而 “NTK-by-parts” 方法通过根据波长区分维度并采用不同插值策略，能够更好地平衡高频信息保留和位置关系理解，实验中可以表现的更好。关于参数取值逻辑可以参考 DeepSeekV3：α=1 和 β=32。
+
 
 ## 参考文献
 - https://spaces.ac.cn/archives/8265/comment-page-1
 - https://spaces.ac.cn/archives/8130
+- https://spaces.ac.cn/archives/9706
 - https://zhuanlan.zhihu.com/p/645263524
 - https://zh.wikipedia.org/wiki/%E6%AC%A7%E6%8B%89%E5%85%AC%E5%BC%8F
 - https://zhuanlan.zhihu.com/p/642884818
@@ -576,3 +650,5 @@ class LlamaDynamicNTKScalingRotaryEmbedding(LlamaRotaryEmbedding):
 - https://github.com/huggingface/transformers/issues/25199
 - https://discuss.huggingface.co/t/is-llama-rotary-embedding-implementation-correct/44509
 - https://normxu.github.io/Rethinking-Rotary-Position-Embedding-2/
+- https://zhuanlan.zhihu.com/p/25241219397
+- https://zhuanlan.zhihu.com/p/15311461897
