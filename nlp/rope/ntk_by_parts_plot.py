@@ -1,286 +1,386 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
+import matplotlib.gridspec as gridspec
 
-matplotlib.rcParams["font.family"] = "DejaVu Sans"
-plt.rcParams["axes.unicode_minus"] = False
+# 设置绘图参数
+plt.rcParams["figure.figsize"] = (16, 12)
+plt.rcParams["font.size"] = 12
+
+# 参数设置
+d = 128  # 维度
+base = 10000  # 基底
+alpha = 1  # NTK-by-parts参数
+beta = 32  # NTK-by-parts参数
+L_orig = 4096  # 原始上下文长度
+L_ext = 163840  # 扩展后上下文长度
+k = 40  # 扩展倍数
+
+# 维度索引
+i_values = np.arange(0, d // 2)
 
 
-def compute_ntk_by_parts_theta(
-    d, base=10000, original_length=4096, extended_length=163840, alpha=1, beta=32
-):
-    """
-    计算 NTK-by-parts 方法的 θ_i 值
+def compute_original_rope_params(i_values, base, d, L):
+    """计算原始RoPE参数"""
+    theta_i = base ** (-2 * i_values / d)
+    wavelength = 2 * np.pi / theta_i
+    r = L / wavelength
+    return theta_i, wavelength, r
 
-    Args:
-        d: 维度大小
-        base: 基地，默认 10000
-        original_length: 原始上下文长度
-        extended_length: 扩展后的上下文长度
-        alpha: γ 函数的参数 α
-        beta: γ 函数的参数 β
 
-    Returns:
-        original_theta: 原始的 θ_i 值
-        modified_theta: NTK-by-parts 修改后的 θ_i 值
-        wavelengths: 波长 λ_i
-        gamma_values: γ(r(i)) 值
-    """
+def compute_gamma(r, alpha, beta):
+    """计算γ(r)函数"""
+    gamma = np.zeros_like(r)
+    gamma[r > beta] = 0
+    gamma[r < alpha] = 1
+    mask = (r >= alpha) & (r <= beta)
+    gamma[mask] = (r[mask] - beta) / (alpha - beta)
+    return gamma
 
-    # 扩展倍数
-    k = extended_length / original_length
 
-    # 计算维度索引
-    i_values = np.arange(0, d // 2)
+def compute_ntk_by_parts_theta(theta_orig, gamma, k):
+    """计算NTK-by-parts的theta_i"""
+    return (1 - gamma) * theta_orig / k + gamma * theta_orig
 
-    # 计算原始 θ_i
-    original_theta = base ** (-2 * i_values / d)
 
-    # 计算波长 λ_i = 2π/θ_i
-    wavelengths = 2 * np.pi / original_theta
+def compute_ntk_aware_theta(i_values, base, d, k):
+    """计算NTK-aware的theta_i"""
+    new_base = base * (k ** (d / (d - 2)))
+    return new_base ** (-2 * i_values / d)
 
-    # 计算 r(i) = L/λ_i
-    r_values = original_length / wavelengths
 
-    # 计算 γ(r) 函数
-    gamma_values = np.zeros_like(r_values)
-    for idx, r in enumerate(r_values):
-        if r > beta:
-            gamma_values[idx] = 0
-        elif r < alpha:
-            gamma_values[idx] = 1
+# 计算各种参数
+theta_orig, wavelength_orig, r_orig = compute_original_rope_params(
+    i_values, base, d, L_orig
+)
+gamma_values = compute_gamma(r_orig, alpha, beta)
+theta_ntk_by_parts = compute_ntk_by_parts_theta(theta_orig, gamma_values, k)
+theta_ntk_aware = compute_ntk_aware_theta(i_values, base, d, k)
+
+# 创建图表
+fig = plt.figure(figsize=(16, 12))
+gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], width_ratios=[1, 1])
+
+# 颜色配置
+colors = {
+    "original": "#1f77b4",
+    "pi": "#ff7f0e",
+    "ntk_aware": "#2ca02c",
+    "ntk_by_parts": "#d62728",
+    "gamma": "#9467bd",
+}
+
+# 1. θ_i 对比图
+ax1 = fig.add_subplot(gs[0, 0])
+ax1.semilogy(
+    i_values,
+    theta_orig,
+    "o-",
+    color=colors["original"],
+    label="Original RoPE",
+    linewidth=2,
+    markersize=4,
+)
+ax1.semilogy(
+    i_values,
+    theta_orig / k,
+    "s-",
+    color=colors["pi"],
+    label="Position Interpolation (θ/k)",
+    linewidth=2,
+    markersize=4,
+)
+ax1.semilogy(
+    i_values,
+    theta_ntk_aware,
+    "^-",
+    color=colors["ntk_aware"],
+    label="NTK-aware",
+    linewidth=2,
+    markersize=4,
+)
+ax1.semilogy(
+    i_values,
+    theta_ntk_by_parts,
+    "v-",
+    color=colors["ntk_by_parts"],
+    label="NTK-by-parts",
+    linewidth=2,
+    markersize=4,
+)
+
+ax1.set_xlabel("Dimension Index i")
+ax1.set_ylabel("θ_i (log scale)")
+ax1.set_title("Frequency Parameters θ_i Comparison")
+ax1.legend()
+ax1.grid(True, alpha=0.3)
+
+# 2. 波长和上下文长度对比
+ax2 = fig.add_subplot(gs[0, 1])
+ax2.semilogy(
+    i_values,
+    wavelength_orig,
+    "o-",
+    color=colors["original"],
+    label="Wavelength λ_i",
+    linewidth=2,
+    markersize=4,
+)
+ax2.axhline(
+    y=L_orig,
+    color="red",
+    linestyle="--",
+    alpha=0.8,
+    label=f"Original Context Length ({L_orig})",
+    linewidth=2,
+)
+ax2.axhline(
+    y=L_ext,
+    color="purple",
+    linestyle="--",
+    alpha=0.8,
+    label=f"Extended Context Length ({L_ext})",
+    linewidth=2,
+)
+
+# 添加维度分类区域
+high_freq_mask = r_orig > beta
+mid_freq_mask = (r_orig >= alpha) & (r_orig <= beta)
+low_freq_mask = r_orig < alpha
+
+ax2.fill_between(
+    i_values[high_freq_mask],
+    1,
+    1e8,
+    alpha=0.2,
+    color="red",
+    label="High Freq (No Interpolation)",
+)
+ax2.fill_between(
+    i_values[mid_freq_mask],
+    1,
+    1e8,
+    alpha=0.2,
+    color="orange",
+    label="Mid Freq (Partial Interpolation)",
+)
+ax2.fill_between(
+    i_values[low_freq_mask],
+    1,
+    1e8,
+    alpha=0.2,
+    color="green",
+    label="Low Freq (Full Interpolation)",
+)
+
+ax2.set_xlabel("Dimension Index i")
+ax2.set_ylabel("Wavelength λ_i (log scale)")
+ax2.set_title("Wavelength vs Context Length")
+ax2.legend()
+ax2.grid(True, alpha=0.3)
+ax2.set_ylim(1, 1e8)
+
+# 3. γ(r) 函数和维度分类
+ax3 = fig.add_subplot(gs[1, 0])
+ax3_twin = ax3.twinx()
+
+# 绘制频率比 r(i)
+line1 = ax3.semilogy(
+    i_values,
+    r_orig,
+    "o-",
+    color="blue",
+    label="r(i) = L/λ_i",
+    linewidth=2,
+    markersize=4,
+)
+ax3.axhline(
+    y=alpha, color="green", linestyle="--", alpha=0.8, label=f"α = {alpha}", linewidth=2
+)
+ax3.axhline(
+    y=beta, color="red", linestyle="--", alpha=0.8, label=f"β = {beta}", linewidth=2
+)
+ax3.set_xlabel("Dimension Index i")
+ax3.set_ylabel("Frequency Ratio r(i)", color="blue")
+
+# 绘制γ(r)
+line2 = ax3_twin.plot(
+    i_values,
+    gamma_values,
+    "s-",
+    color=colors["gamma"],
+    label="γ(r)",
+    linewidth=2,
+    markersize=4,
+)
+ax3_twin.set_ylabel("γ(r)", color=colors["gamma"])
+ax3_twin.set_ylim(-0.1, 1.1)
+
+# 合并图例
+lines = line1 + line2
+labels = [l.get_label() for l in lines]
+ax3.legend(
+    lines
+    + [
+        plt.Line2D([0], [0], color="green", linestyle="--"),
+        plt.Line2D([0], [0], color="red", linestyle="--"),
+    ],
+    labels + [f"α = {alpha}", f"β = {beta}"],
+    loc="center right",
+)
+ax3.set_title("Frequency Ratio r(i) and γ(r) Function")
+ax3.grid(True, alpha=0.3)
+
+# 4. 旋转角度在不同位置的对比
+ax4 = fig.add_subplot(gs[1, 1])
+sample_positions = [1024, 4096, 16384, 65536]
+
+for i, pos in enumerate(sample_positions):
+    if pos <= L_ext:
+        # 计算不同方法的旋转角度
+        angles_orig = pos * theta_orig
+        angles_pi = (pos * L_orig / L_ext) * theta_orig  # 位置插值
+        angles_ntk_aware = pos * theta_ntk_aware
+        angles_ntk_by_parts = pos * theta_ntk_by_parts
+
+        # 使用不同的透明度来表示不同位置
+        alpha_val = 0.3 + 0.7 * i / len(sample_positions)
+
+        if i == 0:  # 只为第一条线添加标签
+            ax4.plot(
+                i_values,
+                angles_orig,
+                "-",
+                color=colors["original"],
+                alpha=alpha_val,
+                linewidth=2,
+                label="Original RoPE",
+            )
+            ax4.plot(
+                i_values,
+                angles_pi,
+                "--",
+                color=colors["pi"],
+                alpha=alpha_val,
+                linewidth=2,
+                label="Position Interpolation",
+            )
+            ax4.plot(
+                i_values,
+                angles_ntk_aware,
+                ":",
+                color=colors["ntk_aware"],
+                alpha=alpha_val,
+                linewidth=2,
+                label="NTK-aware",
+            )
+            ax4.plot(
+                i_values,
+                angles_ntk_by_parts,
+                "-.",
+                color=colors["ntk_by_parts"],
+                alpha=alpha_val,
+                linewidth=2,
+                label="NTK-by-parts",
+            )
         else:
-            gamma_values[idx] = (r - beta) / (alpha - beta)
-
-    # 计算修改后的 θ_i
-    # h(θ_i) = (1 - γ(r(i))) * θ_i/k + γ(r(i)) * θ_i
-    modified_theta = (
-        1 - gamma_values
-    ) * original_theta / k + gamma_values * original_theta
-
-    return original_theta, modified_theta, wavelengths, gamma_values, i_values
-
-
-def plot_ntk_by_parts_curves(d=128):
-    """
-    绘制 NTK-by-parts 的曲线图
-
-    Args:
-        d: 维度大小
-    """
-
-    # 计算 NTK-by-parts 的各个值
-    original_theta, modified_theta, wavelengths, gamma_values, i_values = (
-        compute_ntk_by_parts_theta(d)
-    )
-
-    # 创建更大的图表
-    fig, axes = plt.subplots(2, 3, figsize=(20, 12))
-    fig.suptitle("NTK-by-parts RoPE Analysis (d=128, L=4096→163840)", fontsize=16)
-
-    # 子图1: θ_i 值对比
-    ax1 = axes[0, 0]
-    ax1.semilogy(i_values, original_theta, "b-", label="Original θ_i", linewidth=2)
-    ax1.semilogy(i_values, modified_theta, "r-", label="NTK-by-parts θ_i", linewidth=2)
-    ax1.set_xlabel("Dimension Index i")
-    ax1.set_ylabel("θ_i (log scale)")
-    ax1.set_title("θ_i Values Comparison")
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-
-    # 子图2: 波长 λ_i
-    ax2 = axes[0, 1]
-    ax2.semilogy(i_values, wavelengths, "g-", linewidth=2)
-    ax2.axhline(
-        y=4096,
-        color="r",
-        linestyle="--",
-        alpha=0.7,
-        label="Original Context Length (4096)",
-    )
-    ax2.axhline(
-        y=163840,
-        color="orange",
-        linestyle="--",
-        alpha=0.7,
-        label="Extended Context Length (163840)",
-    )
-    ax2.set_xlabel("Dimension Index i")
-    ax2.set_ylabel("Wavelength λ_i (log scale)")
-    ax2.set_title("Wavelength λ_i = 2π/θ_i")
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-
-    # 子图3: γ(r(i)) 函数
-    ax3 = axes[0, 2]
-    r_values = 4096 / wavelengths
-    ax3.plot(i_values, gamma_values, "purple", linewidth=2)
-    ax3.axhline(y=1, color="gray", linestyle=":", alpha=0.5)
-    ax3.axhline(y=0, color="gray", linestyle=":", alpha=0.5)
-    ax3.set_xlabel("Dimension Index i")
-    ax3.set_ylabel("γ(r(i))")
-    ax3.set_title("Interpolation Factor γ(r(i))")
-    ax3.grid(True, alpha=0.3)
-    ax3.set_ylim(-0.1, 1.1)
-
-    # 子图4: m*θ_i 值对比 - 不同位置
-    ax4 = axes[1, 0]
-    positions = [1024, 4096, 8192, 16384]
-    colors = ["blue", "red", "green", "orange"]
-
-    for pos, color in zip(positions, colors):
-        original_m_theta = pos * original_theta
-        modified_m_theta = pos * modified_theta
-
-        ax4.semilogy(
-            i_values,
-            original_m_theta,
-            color=color,
-            linestyle="-",
-            label=f"Original m*θ_i (m={pos})",
-            linewidth=2,
-            alpha=0.7,
-        )
-        ax4.semilogy(
-            i_values,
-            modified_m_theta,
-            color=color,
-            linestyle="--",
-            label=f"NTK-by-parts m*θ_i (m={pos})",
-            linewidth=2,
-        )
-
-    ax4.set_xlabel("Dimension Index i")
-    ax4.set_ylabel("m*θ_i (log scale)")
-    ax4.set_title("Rotation Angles m*θ_i at Different Positions")
-    ax4.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-    ax4.grid(True, alpha=0.3)
-
-    # 子图5: 角度范围对比
-    ax5 = axes[1, 1]
-    position_range = np.logspace(2, 5, 50)  # 从100到100000
-
-    # 选择几个代表性的维度
-    selected_dims = [0, 16, 32, 48, 63]
-    colors_dims = ["red", "blue", "green", "orange", "purple"]
-
-    for dim_idx, color in zip(selected_dims, colors_dims):
-        if dim_idx < len(original_theta):
-            original_angles = position_range * original_theta[dim_idx]
-            modified_angles = position_range * modified_theta[dim_idx]
-
-            ax5.loglog(
-                position_range,
-                original_angles,
-                color=color,
-                linestyle="-",
-                label=f"Original i={dim_idx}",
+            ax4.plot(
+                i_values,
+                angles_orig,
+                "-",
+                color=colors["original"],
+                alpha=alpha_val,
                 linewidth=2,
-                alpha=0.7,
             )
-            ax5.loglog(
-                position_range,
-                modified_angles,
-                color=color,
-                linestyle="--",
-                label=f"NTK-by-parts i={dim_idx}",
+            ax4.plot(
+                i_values,
+                angles_pi,
+                "--",
+                color=colors["pi"],
+                alpha=alpha_val,
+                linewidth=2,
+            )
+            ax4.plot(
+                i_values,
+                angles_ntk_aware,
+                ":",
+                color=colors["ntk_aware"],
+                alpha=alpha_val,
+                linewidth=2,
+            )
+            ax4.plot(
+                i_values,
+                angles_ntk_by_parts,
+                "-.",
+                color=colors["ntk_by_parts"],
+                alpha=alpha_val,
                 linewidth=2,
             )
 
-    ax5.set_xlabel("Position m")
-    ax5.set_ylabel("m*θ_i")
-    ax5.set_title("m*θ_i vs Position for Selected Dimensions")
-    ax5.legend()
-    ax5.grid(True, alpha=0.3)
+ax4.set_xlabel("Dimension Index i")
+ax4.set_ylabel("Rotation Angle m·θ_i")
+ax4.set_title("Rotation Angles at Different Positions")
+ax4.legend()
+ax4.grid(True, alpha=0.3)
 
-    # 子图6: 相对变化量
-    ax6 = axes[1, 2]
-    relative_change = (modified_theta - original_theta) / original_theta * 100
+plt.tight_layout()
+plt.savefig("ntk_by_parts_plot.png", dpi=300, bbox_inches="tight")
+plt.show()
 
-    ax6.plot(i_values, relative_change, "darkred", linewidth=2)
-    ax6.axhline(y=0, color="black", linestyle="-", alpha=0.5)
-    ax6.set_xlabel("Dimension Index i")
-    ax6.set_ylabel("Relative Change (%)")
-    ax6.set_title("Relative Change in θ_i\n(NTK-by-parts vs Original)")
-    ax6.grid(True, alpha=0.3)
+# 输出详细的分析信息
+print("=== NTK-by-parts 详细分析 ===")
+print(f"参数设置:")
+print(f"  维度 d = {d}")
+print(f"  基底 base = {base}")
+print(f"  α = {alpha}, β = {beta}")
+print(f"  原始上下文长度 L_orig = {L_orig}")
+print(f"  扩展后上下文长度 L_ext = {L_ext}")
+print(f"  扩展倍数 k = {k}")
+print()
 
-    plt.tight_layout()
-    plt.savefig("ntk_by_parts_analysis.png", dpi=300, bbox_inches="tight")
-    plt.show()
+# 分析维度分类
+no_interp_mask = r_orig > beta
+partial_interp_mask = (r_orig >= alpha) & (r_orig <= beta)
+full_interp_mask = r_orig < alpha
 
-    # 输出统计信息
-    print(f"维度: {d}")
-    print(f"原始上下文长度: 4096")
-    print(f"扩展后上下文长度: 163840")
-    print(f"扩展倍数: {163840/4096:.1f}")
-    print(f"\n维度分类统计:")
-    print(f"高频维度 (γ=1, 不插值): {np.sum(gamma_values == 1)} 个")
-    print(f"低频维度 (γ=0, 完全插值): {np.sum(gamma_values == 0)} 个")
-    print(
-        f"中频维度 (0<γ<1, 部分插值): {np.sum((gamma_values > 0) & (gamma_values < 1))} 个"
-    )
+print(f"维度分类详情:")
+print(
+    f"  高频维度 (r > β = {beta}): {np.sum(no_interp_mask)} 个, 占比 {np.sum(no_interp_mask)/len(i_values)*100:.1f}%"
+)
+print(f"    - 保持原始频率，不做插值")
+print(
+    f"    - 维度范围: {i_values[no_interp_mask].min()} - {i_values[no_interp_mask].max()}"
+)
+print(
+    f"  中频维度 (α ≤ r ≤ β): {np.sum(partial_interp_mask)} 个, 占比 {np.sum(partial_interp_mask)/len(i_values)*100:.1f}%"
+)
+print(f"    - 部分插值，介于原始和PI之间")
+print(
+    f"    - 维度范围: {i_values[partial_interp_mask].min()} - {i_values[partial_interp_mask].max()}"
+)
+print(
+    f"  低频维度 (r < α = {alpha}): {np.sum(full_interp_mask)} 个, 占比 {np.sum(full_interp_mask)/len(i_values)*100:.1f}%"
+)
+print(f"    - 完全插值，等同于位置插值")
+print(
+    f"    - 维度范围: {i_values[full_interp_mask].min()} - {i_values[full_interp_mask].max()}"
+)
+print()
 
-    # 输出具体的θ_i值
-    print(f"\n部分 θ_i 值:")
-    print(
-        "i   |  Original θ_i  |  NTK-by-parts θ_i  |  Wavelength  |  γ(r(i))  |  Relative Change"
-    )
-    print("-" * 85)
-    for i in [0, 8, 16, 24, 32, 40, 48, 56, 63]:
-        if i < len(original_theta):
-            rel_change = (
-                (modified_theta[i] - original_theta[i]) / original_theta[i] * 100
-            )
-            print(
-                f"{i:2d} |  {original_theta[i]:.3e}     |  {modified_theta[i]:.3e}       |  {wavelengths[i]:8.1f}  |  {gamma_values[i]:.3f}    |  {rel_change:+6.1f}%"
-            )
-
-
-def plot_detailed_m_theta_comparison():
-    """
-    绘制详细的 m*θ_i 对比图
-    """
-    d = 128
-    original_theta, modified_theta, wavelengths, gamma_values, i_values = (
-        compute_ntk_by_parts_theta(d)
-    )
-
-    # 创建专门的 m*θ_i 对比图
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    fig.suptitle("Detailed m*θ_i Analysis: Original RoPE vs NTK-by-parts", fontsize=16)
-
-    # 不同位置的对比
-    positions = [1024, 4096, 16384, 65536]
-
-    for idx, pos in enumerate(positions):
-        ax = axes[idx // 2, idx % 2]
-
-        original_m_theta = pos * original_theta
-        modified_m_theta = pos * modified_theta
-
-        ax.semilogy(
-            i_values, original_m_theta, "b-", label="Original RoPE", linewidth=2
-        )
-        ax.semilogy(i_values, modified_m_theta, "r-", label="NTK-by-parts", linewidth=2)
-
-        # 添加重要的角度标记
-        ax.axhline(y=np.pi, color="gray", linestyle="--", alpha=0.5, label="π")
-        ax.axhline(y=2 * np.pi, color="gray", linestyle=":", alpha=0.5, label="2π")
-
-        ax.set_xlabel("Dimension Index i")
-        ax.set_ylabel("m*θ_i (log scale)")
-        ax.set_title(f"Position m = {pos}")
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    plt.savefig("detailed_m_theta_comparison.png", dpi=300, bbox_inches="tight")
-    plt.show()
-
-
-if __name__ == "__main__":
-    # 绘制主要的分析图
-    plot_ntk_by_parts_curves(d=128)
-
-    # 绘制详细的 m*θ_i 对比图
-    plot_detailed_m_theta_comparison()
+# 算法对比
+print("算法特点对比:")
+print("1. 原始 RoPE:")
+print("   - 所有维度使用相同的位置索引")
+print("   - 超出训练长度时性能急剧下降")
+print()
+print("2. 位置插值 (PI):")
+print("   - 将位置压缩到训练范围内")
+print("   - 损失高频信息，但保持相对位置关系")
+print()
+print("3. NTK-aware:")
+print("   - 统一调整所有维度的基底")
+print("   - 在高频和低频间做平衡")
+print()
+print("4. NTK-by-parts:")
+print("   - 针对不同频率的维度采用不同策略")
+print("   - 保持高频信息同时实现长度扩展")
+print("   - 在各个维度间达到最优平衡")
